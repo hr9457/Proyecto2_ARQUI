@@ -149,7 +149,16 @@ SWITCH_CASE_CADENAS macro
     lea di,tk_info
     repe cmpsb 
     je comando_informacion
-    ;pop ES               
+    ;pop ES      
+
+
+    ; -> comparacion con el token de lectura del archivo
+    mov cx,6
+    lea si,comando_entrada
+    lea di,tk_abrir
+    repe cmpsb
+    je comando_abrir
+             
     
     ; -> comparacion con el token salir
     mov cx,5 
@@ -166,7 +175,34 @@ SWITCH_CASE_CADENAS macro
         jmp ingreso_comando
     
 endm
-; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - -  
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+; =============== macro para obtner un caracter de un vector
+GET_CARACTER_VECTOR macro vector,posicion,variable
+
+    mov bx,0
+    mov bl,posicion
+    mov si,bx
+    mov bl,vector[si] 
+    mov variable,bl
+    
+endm  
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+; =============== macro enviar a un vector la ruta del archivo
+SET_CARACTER_VECTOR macro vector,posicion,caracter_ruta
+
+    mov bx,0
+    mov bl,posicion
+    mov si,bx
+    mov bl,caracter_ruta
+    mov vector[si],bl
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
 
@@ -201,6 +237,7 @@ endm
     tk_reporte db 'reporte','$';7
     tk_info db 'info','$';4
     tk_salir db 'salir','$';5
+    tk_abrir db 'abrir_','$';6
 
 
     ; -> informacion para mostar por pantalla
@@ -215,6 +252,15 @@ endm
     
     msg_diferentes db 'El comando no se reconoce',10,13,'$'
     msg_iguales db 'Los comando son iguales',10,13,'$'
+
+
+    ;--------- utilidades para la apertura del archivo
+    msg_apertura_archivo db 'Ingrese la ruta del archivo: ','$'
+    posicion_en_comando db 6d  
+    caracter db 0  
+    nombre_archivo db 100 dup('$') 
+    posicion_nombre_archivo db 0
+    
 
 
 .code 
@@ -346,6 +392,46 @@ endm
         PRINT salto_linea
         PRINT msg_informacion
         PRINT salto_linea
+        jmp ingreso_comando
+
+
+    ; -> se a ingresado el comando para abrir un archivo
+    comando_abrir:
+        PRINT msg_apertura_archivo
+        PAUSA_PANTALLA
+        PRINT salto_linea
+        
+        ; -> extraer el nombre del archivo
+        for_obtener_ruta: 
+        
+            ;desde la posicion despues del _  
+            ; parametros: vector_origen, posicion, variable donde depositar
+            GET_CARACTER_VECTOR comando_entrada,posicion_en_comando,caracter
+            
+            ; me muevo a la siguiente posicion del comando ingresado
+            inc posicion_en_comando 
+            
+            ; el caracter obtenido del comando
+            ;PRINT caracter     
+            
+            ;parametros: vector origen, posicion, caracter
+            SET_CARACTER_VECTOR nombre_archivo,posicion_nombre_archivo,caracter
+            inc posicion_nombre_archivo
+            
+            
+            
+            cmp caracter,0
+            je fin_obtener_ruta
+            jmp for_obtener_ruta
+            
+            
+        ;->se termino de obtener la ruta
+        fin_obtener_ruta: 
+           PAUSA_PANTALLA
+           PRINT nombre_archivo
+           PRINT salto_linea           
+            
+        
         jmp ingreso_comando
     
 
