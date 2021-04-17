@@ -53,10 +53,67 @@ endm
     ; --> comando para mostara por consola
     comando_consola db 'consolap2> ','$'
 
+    ; --> vector para guardar el comando por entrada
+    comando_entrada db 100 dup ('$')
+    contador db 0
+
+
+.code 
+
+
+    mov ax,@data
+    mov ds,ax
+
 
 
     ; --> arranque del programa
-    inicio:
+   ; --> arranque del programa
+    ingreso_comando:  
+    
+
+        PRINT comando_consola 
+        
+        mov cx,100
+        mov si,0
+        
+         
+        ; inicio de la lectura del comando 
+        lectura: 
+                  
+            ; verificacion si el contador es igual que al tamanio del vector                  
+            cmp si,cx
+            jge fin_lectura
+            
+            ;ingreso de caracter por consola
+            mov ah,01
+            int 21h
+            
+            ; verificacion de la tecla enter 
+            cmp al,13d
+            je fin_lectura             
+            
+            
+            ; guardar el caracter leido en el vector path
+            mov comando_entrada[si],al
+            inc si
+            jmp lectura
+            
+                                       
+                                       
+        ; fin de la lectura del comando            
+        fin_lectura: 
+            mov comando_entrada[si],0
+              
+          
+        PRINT salto_linea      
+        
+        PRINT comando_entrada
+
+        PRINT salto_linea
+        
+        
+
+        PAUSA_PANTALLA
 
 
 
