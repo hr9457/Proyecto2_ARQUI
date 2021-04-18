@@ -158,7 +158,7 @@ SWITCH_CASE_CADENAS macro
     lea di,tk_abrir
     repe cmpsb
     je comando_abrir
-             
+
     
     ; -> comparacion con el token salir
     mov cx,5 
@@ -261,6 +261,12 @@ endm
     nombre_archivo db 100 dup('$') 
     posicion_nombre_archivo db 0
     
+    handler dw ?
+    msg_error1 db 'Error no se puede abrir el archvo',10,13,'$'
+    msg_error2 db 'Error no se puede leer el archivo',10,13,'$'
+    fragmento db 2 dup('$') 
+    contador_numeros_entrada db 0
+    
 
 
 .code 
@@ -270,8 +276,11 @@ endm
     mov ds,ax
 
 
+    ; --> limpieza de la pantalla para empezar el programa
+    LIMPIAR_PANTALLA
 
-    ; --> arranque del programa
+
+   ; --> arranque del programa
    ; --> arranque del programa
     ingreso_comando:  
     
@@ -315,6 +324,8 @@ endm
         ;PRINT comando_entrada
         ;PRINT salto_linea
         
+        ; == swith case para comparar el comando de entrada 
+        ; == con las palabras reservadas acpetadas por el programa
         SWITCH_CASE_CADENAS
        
 
@@ -395,11 +406,12 @@ endm
         jmp ingreso_comando
 
 
+
     ; -> se a ingresado el comando para abrir un archivo
     comando_abrir:
-        PRINT msg_apertura_archivo
-        PAUSA_PANTALLA
-        PRINT salto_linea
+        ;PRINT msg_apertura_archivo
+        ;PAUSA_PANTALLA
+        ;PRINT salto_linea
         
         ; -> extraer el nombre del archivo
         for_obtener_ruta: 
@@ -419,7 +431,7 @@ endm
             inc posicion_nombre_archivo
             
             
-            
+            ; condicion de salida
             cmp caracter,0
             je fin_obtener_ruta
             jmp for_obtener_ruta
@@ -427,11 +439,95 @@ endm
             
         ;->se termino de obtener la ruta
         fin_obtener_ruta: 
-           PAUSA_PANTALLA
+           ;PAUSA_PANTALLA
            PRINT nombre_archivo
-           PRINT salto_linea           
+           PRINT salto_linea   
+
+            
+        ; - apertura y lectura del archivo
+        mov ah,3dh
+        mov al,0
+        mov dx, offset nombre_archivo
+        int 21h
+        jc error1
+        mov handler,ax
+        
+        leer:
+            mov ah,3fh
+            mov bx,handler
+            mov dx,offset fragmento
+            mov cx,1
+            int 21h
+            
+            jc error2
+            
+            ;EOF del archivo
+            cmp ax,0
+            jz cerrar_archivo
+            
+            ; caracter < ej: <>49<L>
+            cmp fragmento,60
+            je separador
+            
+            ; mayor al rango :
+            cmp fragmento,57
+            jg no_es_numero
+            
+            ; menor al rango /
+            cmp fragmento,48
+            jl no_es_numero
+            
+            
+            jmp es_numero
+            
             
         
+        es_numero:
+            PRINT fragmento
+            inc contador_numeros_entrada
+            jmp leer
+            
+            
+        no_es_numero:
+            jmp leer
+            
+            
+        separador: 
+        
+            cmp contador_numeros_entrada,0
+            je leer
+            
+            PRINT_CARACTER '-'  
+            
+            
+            mov contador_numeros_entrada,0
+            jmp leer
+            
+            
+        error1:
+            PRINT salto_linea
+            PRINT msg_error1
+            PAUSA_PANTALLA
+            jmp ingreso_comando
+            
+            
+        error2:
+            PRINT salto_linea
+            PRINT msg_error2
+            PAUSA_PANTALLA
+            
+            
+            
+        cerrar_archivo:
+            mov ah,3eh
+            mov bx,handler
+            int 21h
+            
+            
+        
+        ; -> salida para pedir otro comando
+        PRINT salto_linea
+        PRINT salto_linea
         jmp ingreso_comando
     
 
