@@ -206,6 +206,91 @@ endm
 
 
 
+
+; =============== macro para imprimir un numero de 16 bits
+PRINT_NUMBER16 macro numero
+    
+    mov ah,02h
+    mov dx,numero
+    add dx,30h
+    int 21h
+    
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+; =============== macro obtener una posicion de un vecto y imprimir 
+PRINT_VECTOR macro numero  
+    
+    local lRes,fin_calc_n,impresion_resultado,fin_print_numero2,efinpnum
+    
+    mov ax,0
+    mov dx,0
+    mov cx,0
+    mov dx,0
+    
+    
+    mov ax,numero
+    mov aux_numero,ax
+    mov contador_numeros_pila,0
+    
+    lRes:
+        cmp ax,0
+        je fin_calc_n
+        
+        ;dividimos entre 10
+        mov ax,aux_numero
+        mov aux_numero,10d
+        cwd
+        div aux_numero
+        
+        push dx;agregamos el residuo
+        mov aux_numero,ax;asiganmos el cociente 
+        inc contador_numeros_pila
+        
+        jmp lRes
+        
+        
+    fin_calc_n:
+        mov cx,contador_numeros_pila
+        cmp cx,0d
+        je fin_print_numero2  
+        
+    
+    impresion_resultado:
+        pop dx
+        PRINT_NUMBER16 dx
+        cmp cx,0d
+        je efinpnum
+        loop impresion_resultado
+        
+        
+        cmp cx,0d
+        je efinpnum
+        
+        
+    fin_print_numero2:
+        PRINT_NUMBER16 0d
+        PAUSA_PANTALLA
+        
+            
+            
+            
+    efinpnum:                   
+        
+    
+    
+endm    
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+
 ;--------------------------------------------------------------- programa general ----------------------------------------------------------------------
 .model small
 .stack
@@ -270,11 +355,18 @@ endm
 
 
     ; ------ utilidades para guardar los archivos de entrada
-    vector_entrada dw 500 dup('$')
+    vector_entrada dw 500 dup('$')  
     posicion_vector_entrada dw 0  
     aux_unidades db 0    
-    respaldo_registro_ax dw 0
+    respaldo_registro_ax dw 0 
+    respaldo_registro_cx dw 0
+    size_vector dw 0   
+    inicio_vector dw 0
 
+    
+    ; ------ utilidades para imprimir los numeros del vector binario
+    aux_numero dw 0
+    contador_numeros_pila dw 0
 
 
 
@@ -471,7 +563,7 @@ endm
             
             jc error2
             
-            ;EOF del archivo
+            ;EOF del archivo 
             ;salta para cerrar un archivo
             cmp ax,0
             jz cerrar_archivo
@@ -493,25 +585,30 @@ endm
             
             
         
-        es_numero:
+        es_numero: 
             PRINT fragmento
             inc contador_numeros_entrada
+            
+            ;-> se toma el fragmento y se empuja a la pila
+            mov bl,fragmento
+            push bx
+            ;PAUSA_PANTALLA
+            
             jmp leer
             
             
         no_es_numero:
             jmp leer
             
-
-         ;-> separador termina una etiqueta encierra un numero   
-        separador: 
-        
-            ; -> contador de numeros leidos        
+            
+        separador:
+         
+            ; -> contador de numeros leidos 
             cmp contador_numeros_entrada,0
             je leer
             
-            PRINT_CARACTER '-'  
-
+            PRINT_CARACTER '-'
+            
             ; -> union de los numeros
             ; -> comparacion para saber cuantos digitos hay que unir
             
@@ -527,14 +624,15 @@ endm
             
             ; -> un digito leido
             CMP contador_numeros_entrada,1d
-            je una_unidad
+            je una_unidad  
             
             
             mov contador_numeros_entrada,0
             jmp leer
-            
-
-        ;-> union de digitos de una unidad
+        
+        
+        
+        
         una_unidad:
             pop bx
             sub bl,30h
@@ -551,20 +649,20 @@ endm
             mov ax,respaldo_registro_ax
             mov vector_entrada[si],ax
             
-            PAUSA_PANTALLA 
-            
             ; incremento la posicion en el vector de entrada
-            inc posicion_vector_entrada
+            inc posicion_vector_entrada 
+            
+            ; incremento el size del vector
+            inc size_vector
             
             ; se vuelve 0 el contador de numeros leidos en el archivo
-            mov contador_numeros_entrada,0            
+            mov contador_numeros_entrada,0             
             
             ; salta para seguir leendo el archivo de entrada
             jmp leer
             
         
         
-        ; union de digitos de dos unidades
         dos_unidades: 
         
             pop bx
@@ -590,20 +688,19 @@ endm
             mov ax,respaldo_registro_ax
             mov vector_entrada[si],ax
             
-            PAUSA_PANTALLA
-            
             ; incremento la posicion en el vector de entrada
-            inc posicion_vector_entrada
+            inc posicion_vector_entrada 
+            
+            ; incremento el size del vector
+            inc size_vector
             
             ; se vuelve 0 el contador de numeros leidos en el archivo
-            mov contador_numeros_entrada,0            
+            mov contador_numeros_entrada,0             
             
-            PAUSA_PANTALLA
             ; salta para seguir leendo el archivo de entrada
             jmp leer
         
         
-        ; union de digitos de tres unidades
         tres_unidades: 
         
             pop bx
@@ -637,22 +734,20 @@ endm
             mov ax,respaldo_registro_ax
             mov vector_entrada[si],ax
             
-            
-            PAUSA_PANTALLA
-            
             ; incremento la posicion en el vector de entrada
             inc posicion_vector_entrada
+            
+            ; incremento el size del vector
+            inc size_vector
             
             ; se vuelve 0 el contador de numeros leidos en el archivo
             mov contador_numeros_entrada,0
             
-            
-            PAUSA_PANTALLA
             ; salta para seguir leendo el archivo de entrada
             jmp leer
-
-
-
+        
+        
+            
         ;-> error en la apertura de un archivo    
         error1:
             PRINT salto_linea
@@ -660,7 +755,7 @@ endm
             PAUSA_PANTALLA
             jmp ingreso_comando
             
-
+        
         ;-> error en la lectura de un archivo    
         error2:
             PRINT salto_linea
@@ -668,23 +763,25 @@ endm
             PAUSA_PANTALLA
             
             
-
-        ;-> cierre de un archivo    
+        ;->cierre de un archivo    
         cerrar_archivo:
             mov ah,3eh
             mov bx,handler
             int 21h
-            
-            
+                                                  
+                                                  
+        ; -> finalizacion de la lectura del archivo de entrada
+        ; -> impresion de prueba de los numeros almacenados en el vector binario
+        PAUSA_PANTALLA 
+        PRINT salto_linea
+        PRINT_VECTOR vector_entrada
+           
         
         ; -> salida para pedir otro comando
         PRINT salto_linea
         PRINT salto_linea
         jmp ingreso_comando
     
-
-
-
 
     ; --> opcion de salida
     salir:  
