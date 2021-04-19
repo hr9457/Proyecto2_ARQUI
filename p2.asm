@@ -266,7 +266,16 @@ endm
     msg_error2 db 'Error no se puede leer el archivo',10,13,'$'
     fragmento db 2 dup('$') 
     contador_numeros_entrada db 0
-    
+
+
+
+    ; ------ utilidades para guardar los archivos de entrada
+    vector_entrada dw 500 dup('$')
+    posicion_vector_entrada dw 0  
+    aux_unidades db 0    
+    respaldo_registro_ax dw 0
+
+
 
 
 .code 
@@ -441,7 +450,8 @@ endm
         fin_obtener_ruta: 
            ;PAUSA_PANTALLA
            PRINT nombre_archivo
-           PRINT salto_linea   
+           PRINT salto_linea
+           mov posicion_en_comando,6d ;incio de donde tiene que estar el nombre del archivo   
 
             
         ; - apertura y lectura del archivo
@@ -462,6 +472,7 @@ endm
             jc error2
             
             ;EOF del archivo
+            ;salta para cerrar un archivo
             cmp ax,0
             jz cerrar_archivo
             
@@ -477,7 +488,7 @@ endm
             cmp fragmento,48
             jl no_es_numero
             
-            
+            ; la lectura es un digito
             jmp es_numero
             
             
@@ -491,33 +502,174 @@ endm
         no_es_numero:
             jmp leer
             
-            
+
+         ;-> separador termina una etiqueta encierra un numero   
         separador: 
         
+            ; -> contador de numeros leidos        
             cmp contador_numeros_entrada,0
             je leer
             
             PRINT_CARACTER '-'  
+
+            ; -> union de los numeros
+            ; -> comparacion para saber cuantos digitos hay que unir
+            
+            ; -> tres digitos leidos
+            CMP contador_numeros_entrada,3d
+            je tres_unidades
+            
+            
+            ; -> dos digitos leidos
+            CMP contador_numeros_entrada,2d
+            je dos_unidades
+            
+            
+            ; -> un digito leido
+            CMP contador_numeros_entrada,1d
+            je una_unidad
             
             
             mov contador_numeros_entrada,0
             jmp leer
             
+
+        ;-> union de digitos de una unidad
+        una_unidad:
+            pop bx
+            sub bl,30h
+            mov al,1d
+            mul bl
+            mov aux_unidades,al    
             
+            
+            mov respaldo_registro_ax,ax
+            mov ax,posicion_vector_entrada
+            mov cx,2
+            mul cx
+            mov si,ax
+            mov ax,respaldo_registro_ax
+            mov vector_entrada[si],ax
+            
+            PAUSA_PANTALLA 
+            
+            ; incremento la posicion en el vector de entrada
+            inc posicion_vector_entrada
+            
+            ; se vuelve 0 el contador de numeros leidos en el archivo
+            mov contador_numeros_entrada,0            
+            
+            ; salta para seguir leendo el archivo de entrada
+            jmp leer
+            
+        
+        
+        ; union de digitos de dos unidades
+        dos_unidades: 
+        
+            pop bx
+            sub bl,30h
+            mov al,1d
+            mul bl
+            
+            mov aux_unidades,al
+            
+            pop bx
+            sub bl,30h
+            mov al,10d
+            mul bl
+            
+            ; numero de dos unidades guardado en al
+            add al,aux_unidades
+            
+            mov respaldo_registro_ax,ax
+            mov ax,posicion_vector_entrada
+            mov cx,2
+            mul cx
+            mov si,ax
+            mov ax,respaldo_registro_ax
+            mov vector_entrada[si],ax
+            
+            PAUSA_PANTALLA
+            
+            ; incremento la posicion en el vector de entrada
+            inc posicion_vector_entrada
+            
+            ; se vuelve 0 el contador de numeros leidos en el archivo
+            mov contador_numeros_entrada,0            
+            
+            PAUSA_PANTALLA
+            ; salta para seguir leendo el archivo de entrada
+            jmp leer
+        
+        
+        ; union de digitos de tres unidades
+        tres_unidades: 
+        
+            pop bx
+            sub bl,30h
+            mov al,1d
+            mul bl
+            
+            mov aux_unidades,al
+            
+            pop bx
+            sub bl,30h
+            mov al,10d
+            mul bl
+            
+            add al,aux_unidades
+            
+            mov aux_unidades,al
+            
+            pop bx
+            sub bl,30h
+            mov al,100d
+            mul bl
+            
+            add al,aux_unidades 
+            
+            mov respaldo_registro_ax,ax
+            mov ax,posicion_vector_entrada
+            mov cx,2
+            mul cx
+            mov si,ax
+            mov ax,respaldo_registro_ax
+            mov vector_entrada[si],ax
+            
+            
+            PAUSA_PANTALLA
+            
+            ; incremento la posicion en el vector de entrada
+            inc posicion_vector_entrada
+            
+            ; se vuelve 0 el contador de numeros leidos en el archivo
+            mov contador_numeros_entrada,0
+            
+            
+            PAUSA_PANTALLA
+            ; salta para seguir leendo el archivo de entrada
+            jmp leer
+
+
+
+        ;-> error en la apertura de un archivo    
         error1:
             PRINT salto_linea
             PRINT msg_error1
             PAUSA_PANTALLA
             jmp ingreso_comando
             
-            
+
+        ;-> error en la lectura de un archivo    
         error2:
             PRINT salto_linea
             PRINT msg_error2
             PAUSA_PANTALLA
             
             
-            
+
+        ;-> cierre de un archivo    
         cerrar_archivo:
             mov ah,3eh
             mov bx,handler
@@ -530,6 +682,9 @@ endm
         PRINT salto_linea
         jmp ingreso_comando
     
+
+
+
 
     ; --> opcion de salida
     salir:  
