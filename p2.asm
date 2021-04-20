@@ -343,7 +343,7 @@ endm
 
 
 
-; =============== macro para recorrer el vector
+; =============== macro para ordenar el vector forma ascendente
 ORDENAMIENTO_BURBUJA_ASC macro vector,size_vector
     
    local for_burbuja,intercambio,fin_burbuja_j,fin_burbuja
@@ -447,6 +447,115 @@ endm
 
 
 
+
+; =============== macro para ordenar el vector de forma descendte
+ORDENAMIENTO_BURBUJA_DES macro vector,size_vector
+    
+   local for_burbuja_des,intercambio_des,for_burbuja_j_des,fin_burbuja_j_des,fin_burbuja_des
+
+    ;-------------- limpieza y copia de variables
+    mov i,0d
+    mov j,0d
+    mov temporal,0d
+    mov valor_en_posicion_j,0d   
+    mov valor_en_posicion_j_masUno,0d
+    mov volor_en_posicion_i, 0d 
+    mov siguiente_j,1d
+
+    mov ax,0
+    mov ax,size_vector 
+    mov size_copia2,ax
+    dec size_copia2
+    mov cx,0
+    mov dx,0 
+    mov bx,0
+    mov ax,0
+    mov cx,size_vector
+    mov dx,size_copia2
+    
+    
+    
+    for_burbuja_des:
+            
+            ;-- condicion de salida
+            ;-- salta si i es mayor a dx
+            mov cx,size_vector
+            cmp i,cx
+            jnle fin_burbuja_des              
+            
+            ;---- for interno
+            for_burbuja_j_des:
+                
+                ;---- condicion de salida
+                mov dx,size_copia2  
+                cmp j,dx
+                jnl fin_burbuja_j_des
+                
+                
+                ;--- if vector[j] > vector[j+1] 
+                GET_NUMBER_BINARY vector_entrada,j,valor_en_posicion_j
+                GET_NUMBER_BINARY vector_entrada,siguiente_j,valor_en_posicion_j_masUno 
+                
+                
+                mov ax,valor_en_posicion_j
+                mov bx,valor_en_posicion_j_masUno
+                
+                ;--- si el numero vector[j] < a vector[j+1]
+                cmp valor_en_posicion_j,bx
+                jng  intercambio_des  
+                
+                
+                ;--- regresa 
+                inc j
+                inc siguiente_j
+                jmp for_burbuja_j_des
+                
+                
+                ;-- intercambio de posiciones
+                intercambio_des:
+                    
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_entrada,j,temporal
+                    
+                    ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_entrada,j,valor_en_posicion_j_masUno
+                    
+                    
+                    ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_entrada,siguiente_j,temporal
+                
+                    
+                    ;--- regresa 
+                    inc j ;j++
+                    inc siguiente_j ;j+1 ++
+                    jmp for_burbuja_j_des               
+                
+                
+                
+            fin_burbuja_j_des:
+                inc i ;i++
+                mov j,0d 
+                mov siguiente_j,1d
+                mov temporal,0
+                mov valor_en_posicion_j_masUno,0
+                mov valor_en_posicion_j,0   
+                jmp for_burbuja_des        
+        
+            
+            
+        ;-> fin del ciclo burbuja   
+        fin_burbuja_des:
+    
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
 ;--------------------------------------------------------------- programa general ----------------------------------------------------------------------
 .model small
 .stack
@@ -541,6 +650,13 @@ endm
     siguiente_j dw 1
 
 
+    ; ------- utilidades para saber el menor numero
+    valor_minimo dw 0
+                           
+                           
+    ; ------- utilidades para saber el mayor numero 
+    valor_maximo dw 0
+
 
 .code 
 
@@ -627,12 +743,31 @@ endm
                            
     ; -> se a ingreado el comando cmax
     comando_cmax:
-        PRINT msg_iguales
+        
+        ORDENAMIENTO_BURBUJA_DES vector_entrada,size_vector
+        PRINT salto_linea
+        IMPRIMIRVECTOR vector_entrada,size_vector
+        
+        GET_NUMBER_BINARY vector_entrada,0,valor_maximo
+        PAUSA_PANTALLA
+        PRINT salto_linea
+
         jmp ingreso_comando                       
     
     ; -> se a ingresado el comando cmin
     comando_cmin:
-        PRINT msg_iguales
+        
+        ;-> ordena de menor a mayor se obtiene el primer valor
+        ; -> prueba para ver el ordenamiento burbuja ascendente
+        ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector
+        PRINT salto_linea
+        IMPRIMIRVECTOR vector_entrada,size_vector
+        ;->*****************************************************
+        
+        GET_NUMBER_BINARY vector_entrada,0,valor_minimo
+        PAUSA_PANTALLA
+        PRINT salto_linea
+        
         jmp ingreso_comando
     
         
@@ -726,6 +861,8 @@ endm
         jc error1
         mov handler,ax
         
+
+        ;-> comieza la lectura uno a uno del archivo
         leer:
             mov ah,3fh
             mov bx,handler
@@ -756,7 +893,7 @@ endm
             jmp es_numero
             
             
-        
+        ;-> verificaicon la lectura es un numero
         es_numero: 
             PRINT fragmento
             inc contador_numeros_entrada
@@ -768,11 +905,13 @@ endm
             
             jmp leer
             
-            
+
+        ;-> la lectura no es un numero    
         no_es_numero:
             jmp leer
             
-            
+
+        ;-> finalizacion de la lectura de un numero     
         separador:
          
             ; -> contador de numeros leidos 
@@ -804,7 +943,7 @@ endm
         
         
         
-        
+        ;-> numero leido del archivo de entrada es un digito
         una_unidad:
             pop bx
             sub bl,30h
@@ -835,6 +974,7 @@ endm
             
         
         
+        ;-> numero leido del archivo de entrada es dos digitos
         dos_unidades: 
         
             pop bx
@@ -873,6 +1013,7 @@ endm
             jmp leer
         
         
+        ;-> numero leido del archivo de entrada es de tres digitos
         tres_unidades: 
         
             pop bx
@@ -951,12 +1092,6 @@ endm
         IMPRIMIRVECTOR vector_entrada,size_vector
            
         
-        ; -> prueba para ver el ordenamiento burbuja ascendente
-        ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector
-        PRINT salto_linea
-        IMPRIMIRVECTOR vector_entrada,size_vector
-        ;->*****************************************************
-
 
         ; -> salida para pedir otro comando
         PRINT salto_linea
