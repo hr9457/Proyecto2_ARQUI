@@ -308,8 +308,142 @@ ENDM
 ; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
+; =============== macro obtener un valor en cierta posicion del vector
+GET_NUMBER_BINARY macro vector,posicion,variable
+
+    mov bx,0
+    mov ax,0
+    mov ax,posicion
+    mov cx,2
+    mul cx
+    mov si,ax
+    mov bx,vector[si]
+    mov variable,bx
+    
+endm  
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - -  
 
 
+  
+; =============== macro enviar un numero en cierta posicion del vector
+SET_VECTOR_BINARY macro vector,posicion,variable
+    
+    ;mov respaldo_registro_ax,ax
+    mov ax,0
+    mov cx,0
+    mov ax,posicion
+    mov cx,2
+    mul cx
+    mov si,ax
+    mov ax,variable
+    mov vector_entrada[si],ax  
+    
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+; =============== macro para recorrer el vector
+ORDENAMIENTO_BURBUJA_ASC macro vector,size_vector
+    
+   local for_burbuja,intercambio,fin_burbuja_j,fin_burbuja
+
+    ;-------------- limpieza y copia de variables
+    mov i,0d
+    mov j,0d
+    mov temporal,0d
+    mov valor_en_posicion_j,0d   
+    mov valor_en_posicion_j_masUno,0d
+    mov volor_en_posicion_i, 0d 
+    mov siguiente_j,1d
+
+    mov ax,0
+    mov ax,size_vector 
+    mov size_copia2,ax
+    dec size_copia2
+    mov cx,0
+    mov dx,0 
+    mov bx,0
+    mov ax,0
+    mov cx,size_vector
+    mov dx,size_copia2
+    
+    
+    
+    for_burbuja:
+            
+            ;-- condicion de salida
+            ;-- salta si i es mayor a dx
+            mov cx,size_vector
+            cmp i,cx
+            jnle fin_burbuja              
+            
+            ;---- for interno
+            for_burbuja_j:
+                
+                ;---- condicion de salida
+                mov dx,size_copia2  
+                cmp j,dx
+                jnl fin_burbuja_j
+                
+                
+                ;--- if vector[j] > vector[j+1] 
+                GET_NUMBER_BINARY vector_entrada,j,valor_en_posicion_j
+                GET_NUMBER_BINARY vector_entrada,siguiente_j,valor_en_posicion_j_masUno 
+                
+                
+                mov ax,valor_en_posicion_j
+                mov bx,valor_en_posicion_j_masUno
+                
+                ;--- si el numero vector[j] > a vector[j+1]
+                cmp valor_en_posicion_j,bx
+                jg  intercambio  
+                
+                
+                ;--- regresa 
+                inc j
+                inc siguiente_j
+                jmp for_burbuja_j
+                
+                
+                ;-- intercambio de posiciones
+                intercambio:
+                    
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_entrada,j,temporal
+                    
+                    ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_entrada,j,valor_en_posicion_j_masUno
+                    
+                    
+                    ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_entrada,siguiente_j,temporal
+                
+                    
+                    ;--- regresa 
+                    inc j ;j++
+                    inc siguiente_j ;j+1 ++
+                    jmp for_burbuja_j               
+                
+                
+                
+            fin_burbuja_j:
+                inc i ;i++
+                mov j,0d 
+                mov siguiente_j,1d
+                mov temporal,0
+                mov valor_en_posicion_j_masUno,0
+                mov valor_en_posicion_j,0   
+                jmp for_burbuja        
+        
+            
+            
+        ;-> fin del ciclo burbuja   
+        fin_burbuja:
+    
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
 
@@ -393,6 +527,18 @@ ENDM
     contImpVector dw 0 
     auxRegAX dw 0  ;respaldos ax
     auxRegCX dw 0  ; respaldo de cx
+
+
+
+    ; ------ utilidades para el ordenamiento burbuja
+    i dw 0
+    j dw 0
+    temporal dw 0  
+    size_copia2 dw 0  
+    valor_en_posicion_j dw 0   
+    valor_en_posicion_j_masUno dw 0
+    volor_en_posicion_i dw 0 
+    siguiente_j dw 1
 
 
 
@@ -805,6 +951,13 @@ ENDM
         IMPRIMIRVECTOR vector_entrada,size_vector
            
         
+        ; -> prueba para ver el ordenamiento burbuja ascendente
+        ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector
+        PRINT salto_linea
+        IMPRIMIRVECTOR vector_entrada,size_vector
+        ;->*****************************************************
+
+
         ; -> salida para pedir otro comando
         PRINT salto_linea
         PRINT salto_linea
