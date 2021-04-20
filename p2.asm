@@ -219,71 +219,93 @@ endm
 ; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-
-; =============== macro obtener una posicion de un vecto y imprimir 
-PRINT_VECTOR macro numero  
+; =============== macro para imprimir un numero dw
+PRINTNUMEROS MACRO numero 
     
-    local lRes,fin_calc_n,impresion_resultado,fin_print_numero2,efinpnum
+    local lRes, eFinCalcN, impRes,eFinPNum,eFinPNum2
     
     mov ax,0
     mov dx,0
     mov cx,0
     mov dx,0
-    
-    
-    mov ax,numero
-    mov aux_numero,ax
-    mov contador_numeros_pila,0
+
+ ; Ciclo que nos sirve para poder separar el resultado en valores individuales 
+
+    MOV AX, numero
+    MOV numero_aux_entrada, AX  ; numero que ingreso  
+    MOV cantidad_numero_en_pila, 0  ; Contador auxiliar que nos servira más adelante para sacar los valores de la pila 
     
     lRes:
-        cmp ax,0
-        je fin_calc_n
+        CMP AX, 0
+        JE efinCalcN ; al cumplirse la condicion salimos del ciclo
         
-        ;dividimos entre 10
-        mov ax,aux_numero
-        mov aux_numero,10d
-        cwd
-        div aux_numero
-        
-        push dx;agregamos el residuo
-        mov aux_numero,ax;asiganmos el cociente 
-        inc contador_numeros_pila
-        
-        jmp lRes
-        
-        
-    fin_calc_n:
-        mov cx,contador_numeros_pila
-        cmp cx,0d
-        je fin_print_numero2  
-        
+        ; Dividimos entre 10
+        MOV AX, numero_aux_entrada
+        MOV resultado_division, 10D
+        CWD
+        DIV resultado_division
+
+        PUSH DX ; Agregamos el residuo
+        MOV numero_aux_entrada, AX ; Asignamos el cociente que nos servira en la proxima iteración
+        INC cantidad_numero_en_pila ; Incrementamos en 1 que luego nos servira para sacar los valores de la pila
+        ;PAUSA
+    JMP lRes    
     
-    impresion_resultado:
-        pop dx
-        PRINT_NUMBER16 dx
-        cmp cx,0d
-        je efinpnum
-        loop impresion_resultado
-        
-        
-        cmp cx,0d
-        je efinpnum
-        
-        
-    fin_print_numero2:
-        PRINT_NUMBER16 0d
-        PAUSA_PANTALLA
-        
-            
-            
-            
-    efinpnum:                   
-        
+    eFinCalcN:    
+    ; Ciclo para imprimir el resultado de la operación
+    MOV CX, cantidad_numero_en_pila
+    CMP CX, 0D
+    JE eFinPnum2
+           
+    impRes:
+        POP DX
+        PRINT_NUMBER16 DX
+        CMP CX, 0D
+        JE eFinPNum
+    loop impRes
+    
+    CMP CX, 0D
+    JE eFinPNum
+    
+    eFinPNum2:
+    PRINT_NUMBER16 0D
     
     
-endm    
+    eFinPNum: 
+    
+ENDM     
 ; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
+
+
+; =============== macro para recorrer el vector
+IMPRIMIRVECTOR MACRO vector, size_vector
+    local ImpV, finImp
+    
+    MOV contImpVector, 0  
+    ImpV:
+        mov cx,0 ; limpieza del cx
+        mov cx, size_vector ; Asignamos el tamanio del vector a cl
+        CMP contImpVector, CX
+        JGE finImp
+        ;MOV SI, contImpVector
+        MOV auxRegAX, ax
+        MOV auxRegCX, CX
+        MOV AX, contImpVector
+        MOV CX, 2
+        MUL CX
+        MOV SI, AX
+        MOV AX, auxRegAX
+        MOV CX, auxRegCX
+        PRINTNUMEROS vector[si] 
+        
+        PRINT_CARACTER '-' 
+        
+        inc contImpVector
+    jmp ImpV
+    finImp:
+ENDM
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
 
@@ -364,9 +386,13 @@ endm
     inicio_vector dw 0
 
     
-    ; ------ utilidades para imprimir los numeros del vector binario
-    aux_numero dw 0
-    contador_numeros_pila dw 0
+    ; ------ utilidades para imprimir los numeros del vector binario 
+    cantidad_numero_en_pila dw 0
+    resultado_division dw 0
+    numero_aux_entrada dw 0 
+    contImpVector dw 0 
+    auxRegAX dw 0  ;respaldos ax
+    auxRegCX dw 0  ; respaldo de cx
 
 
 
@@ -774,7 +800,9 @@ endm
         ; -> impresion de prueba de los numeros almacenados en el vector binario
         PAUSA_PANTALLA 
         PRINT salto_linea
-        PRINT_VECTOR vector_entrada
+        
+        ; -> imprimir vector donde se guardo la lectura
+        IMPRIMIRVECTOR vector_entrada,size_vector
            
         
         ; -> salida para pedir otro comando
