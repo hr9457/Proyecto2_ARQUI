@@ -725,8 +725,26 @@ endm
 
     ; ------- utilidades para la impresion del valor de una variable
     contador_de_decimales db 0  
-    numero_en_pila dw 0
-
+    numero_en_pila dw 0 
+    
+    
+    ; ------- utilidades para econtrar el promedio
+    numero_a_sumar dw 0
+    posicion_valor dw 0
+    suma_total dw 0
+    decimales dw 0
+    copia_size dw 0
+    
+    
+    aux_unidades2 dw 0 
+    
+    contador_decimales dw 0
+    parte_entera dw 0
+    residuo dw 0 
+    decimal dw 0
+    
+  
+  
 
 .code 
 
@@ -796,8 +814,128 @@ endm
        
     ; -> se a ingresado el comando cprom
     comando_cprom:
-        PRINT msg_iguales
-        jmp ingreso_comando
+        
+            
+        mov ax,0
+        mov bx,0  
+        mov cx,0 
+        mov cx,size_vector
+        mov copia_size,cx
+        
+        ;PAUSA_PANTALLA    
+            
+        ;-> recorrer el vector y ir sumando sus valores
+        FOR_PROMEDIO:
+            
+             ;->condicion de salida
+             cmp copia_size,0
+             je FIN_FOR_PROMEDIO
+             
+             
+             ;-> obtener el valor que se va a sumar
+             GET_NUMBER_BINARY vector_entrada,posicion_valor,numero_a_sumar
+             
+             ;-> se suma el valor en una variable total
+             mov ax,numero_a_sumar
+             add suma_total,ax 
+             
+             
+             ;-> pasa a la siguiente posicion del vector
+             inc posicion_valor                          
+             
+             ;-> decrementa cantidad numeros en el vector
+             dec copia_size
+             
+             ;-> repite el ciclo
+             jmp FOR_PROMEDIO
+             
+             
+            
+        FIN_FOR_PROMEDIO:
+            ;->
+        
+        
+        ;PAUSA_PANTALLA 
+        
+        ;-> calculo del promedio 
+        mov ax,0
+        mov bx,0
+        
+        mov ax,suma_total
+        mov bx,size_vector
+        div bx  
+        
+        
+        ; -> guardo la parte entera de la divison
+        mov parte_entera,ax
+        
+        ; -> guardo la parte para calcular los decimales
+        mov residuo,dx     
+        
+        
+        ;-> IMPRESION DEL RESULTADO DEL PROMEDIO 
+        PRINT salto_linea   
+        
+        ;->impresion del comando de consola
+        PRINT comando_consola
+        
+        NUMBER_BINARY_ASCII parte_entera
+        
+        ;-> IMPRESION DEL PUNTO 
+        PRINT_CARACTER '.'
+        
+        
+        
+        ;-> ciclo para el calculo de los decimales
+        FOR_DECIMALES:
+            mov ax,0D
+            mov ax,residuo 
+            
+            ;-> condicion de salida para calcular solo tres decimales
+            cmp contador_decimales,3D
+            je FIN_FOR_DECIMALES   
+            
+            
+            ;-> limpieza de registros
+            mov bx,0D
+            mov bx,10D
+            mul bx 
+            
+            
+            mov bx,0D
+            mov bx,size_vector
+            div bx
+            mov decimal,ax 
+            mov residuo,dx
+            ;push ax  
+            
+            ;-> impresion del decimal
+            NUMBER_BINARY_ASCII decimal
+            
+            ;1,1,1,4,4,5
+            
+            ;-> AUMENTA PARA SABER LA CANTIDAD DE DECIMALES CALCULADOS
+            inc contador_decimales
+                                  
+            ;-> SE REPITE EL CICLO
+            jmp FOR_DECIMALES
+                                  
+                                  
+                                  
+        ;-> FINALIZACION DEL CICLO
+        FIN_FOR_DECIMALES:
+            ;-----------
+         
+         
+        ;->
+        PRINT salto_linea  
+        PRINT salto_linea         
+        
+        
+        ;-> REGRESA PARA PEDIR EL SIGUIENTE COMANDO
+        jmp ingreso_comando   
+        
+        
         
         
     ; -> se a ingreado el comando cmediana
@@ -1107,30 +1245,40 @@ endm
         
         
         ;-> numero leido del archivo de entrada es de tres digitos
-        tres_unidades: 
+        tres_unidades:  
+        
+            ;PAUSA_PANTALLA
+        
+            mov aux_unidades,0 
         
             pop bx
             sub bl,30h
             mov al,1d
-            mul bl
-            
+            mul bl            
             mov aux_unidades,al
+            
             
             pop bx
             sub bl,30h
             mov al,10d
-            mul bl
-            
-            add al,aux_unidades
-            
+            mul bl            
+            add al,aux_unidades            
             mov aux_unidades,al
+            
             
             pop bx
             sub bl,30h
             mov al,100d
-            mul bl
+            mul bl 
             
-            add al,aux_unidades 
+            mov cx,0
+            mov cl,aux_unidades                 
+            add ax,cx   ;problemas algunos numeros 
+            
+            mov aux_unidades2,ax
+            
+            ;PAUSA_PANTALLA 
+            
             
             mov respaldo_registro_ax,ax
             mov ax,posicion_vector_entrada
