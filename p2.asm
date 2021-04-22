@@ -553,6 +553,71 @@ endm
 
 
 
+; ========== macro para convertir un numero binario a ASCII
+NUMBER_BINARY_ASCII macro numero
+
+    local DOWHILE,ESCRIBIR_ASCII,FIN_ESCRIBIR_ASCII
+
+    ;-> limpieza 
+    ;-> limpieza 
+        mov contador_de_decimales,0D
+        mov dx,0d
+        mov ax,0d
+    
+        mov ax,numero 
+        
+    
+        DOWHILE:
+            
+            mov dx,0D
+            mov cx,10D
+            div cx
+    
+            ;-> empuje a la pila y aumento numeros en pila
+            push dx
+            inc contador_de_decimales
+    
+            ;-> comparamos el resultado del cociente
+            cmp ax,0
+            jnle DOWHILE 
+            
+    
+    
+        ;-> sacado de la pila 
+        mov ax,0          
+        
+    
+        ESCRIBIR_ASCII:
+    
+            ;-> condicion de salida
+            ;-> salta si el contador es igual a 0
+            cmp contador_de_decimales,0
+            je FIN_ESCRIBIR_ASCII
+    
+    
+            pop dx
+            mov numero_en_pila,dx 
+            ;add numero_en_pila,30h
+            dec contador_de_decimales
+    
+            ;-> se escribe en el archivo
+            ;WRITE_IN_FILE numero_en_pila,1d 
+            PRINT_NUMBER16 numero_en_pila
+            
+    
+            ;-> repite el ciclo 
+            jmp ESCRIBIR_ASCII
+    
+    
+        FIN_ESCRIBIR_ASCII:
+
+
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - -  
+
+
+
 
 
 
@@ -658,6 +723,11 @@ endm
     valor_maximo dw 0
 
 
+    ; ------- utilidades para la impresion del valor de una variable
+    contador_de_decimales db 0  
+    numero_en_pila dw 0
+
+
 .code 
 
 
@@ -744,15 +814,28 @@ endm
     ; -> se a ingreado el comando cmax
     comando_cmax:
         
+        ;-> ordenamiento del vector descendente 
         ORDENAMIENTO_BURBUJA_DES vector_entrada,size_vector
-        PRINT salto_linea
-        IMPRIMIRVECTOR vector_entrada,size_vector
+        ;PRINT salto_linea
+        ;IMPRIMIRVECTOR vector_entrada,size_vector
         
-        GET_NUMBER_BINARY vector_entrada,0,valor_maximo
-        PAUSA_PANTALLA
+        ;->obtiene el valor maximo = primer valor del vector
+        GET_NUMBER_BINARY vector_entrada,0,valor_maximo 
+        
+        ;->impresion del comando de consola
+        PRINT comando_consola
+        
+        ;-> impresion del valor minimo              
+        NUMBER_BINARY_ASCII valor_maximo
+                      
+                      
+        PRINT salto_linea 
         PRINT salto_linea
+                
 
-        jmp ingreso_comando                       
+        jmp ingreso_comando
+
+
     
     ; -> se a ingresado el comando cmin
     comando_cmin:
@@ -760,15 +843,25 @@ endm
         ;-> ordena de menor a mayor se obtiene el primer valor
         ; -> prueba para ver el ordenamiento burbuja ascendente
         ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector
-        PRINT salto_linea
-        IMPRIMIRVECTOR vector_entrada,size_vector
-        ;->*****************************************************
+        ;PRINT salto_linea
+        ;IMPRIMIRVECTOR vector_entrada,size_vector
         
-        GET_NUMBER_BINARY vector_entrada,0,valor_minimo
-        PAUSA_PANTALLA
-        PRINT salto_linea
+        ;-> obtiene el valor minimo = primer valor del vector
+        GET_NUMBER_BINARY vector_entrada,0,valor_minimo  
         
+        ;->impresion del comando de consola
+        PRINT comando_consola
+        
+        ;-> impresion del valor minimo              
+        NUMBER_BINARY_ASCII valor_minimo
+                      
+                      
+        PRINT salto_linea 
+        PRINT salto_linea
+                
         jmp ingreso_comando
+
+
     
         
     ; -> se a ingresado el comando gbarra_asc
