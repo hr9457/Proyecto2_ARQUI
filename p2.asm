@@ -1,4 +1,4 @@
-; ----------- macro para limpiar la pantalla 
+                                                               ; ----------- macro para limpiar la pantalla 
 LIMPIAR_PANTALLA macro
 	mov ah,00h
 	mov al,03h
@@ -336,7 +336,7 @@ SET_VECTOR_BINARY macro vector,posicion,variable
     mul cx
     mov si,ax
     mov ax,variable
-    mov vector_entrada[si],ax  
+    mov vector[si],ax  
     
 endm
 ; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -346,7 +346,7 @@ endm
 ; =============== macro para ordenar el vector forma ascendente
 ORDENAMIENTO_BURBUJA_ASC macro vector,size_vector
     
-   local for_burbuja,intercambio,fin_burbuja_j,fin_burbuja
+   local for_burbuja,for_burbuja_j,intercambio,fin_burbuja_j,fin_burbuja
 
     ;-------------- limpieza y copia de variables
     mov i,0d
@@ -741,7 +741,26 @@ endm
     contador_decimales dw 0
     parte_entera dw 0
     residuo dw 0 
-    decimal dw 0
+    decimal dw 0 
+    
+
+
+    ; ---------- utilidades para la tabla de frecuencias
+    vector_frecuencia dw 500 dup('$')
+    numero_frecuencia dw 500 dup('$')
+    tamanio_vector_frecuencia dw 0D
+    
+    cantidad_frecuencia dw 1D
+    contador_frecuencia dw 0d
+    valor_para_frecuencia dw 0d 
+    valor_para_frecuencia_siguiente dw 0d 
+    posicion_valor_vector_entrada dw 0d
+    posicion_vector_frecuencia dw 0d
+    copia_size2 dw 0d
+    
+  
+  
+
     
   
   
@@ -944,11 +963,105 @@ endm
         jmp ingreso_comando               
         
     ; -> se a ingreado el comando cmoda
-    comando_cmoda:
-        PRINT msg_iguales
-        jmp ingreso_comando    
+    comando_cmoda:         
+                  
+        ;-> orden de menor a mayor
+        ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector  
+
+        ;-> calculo de la moda se usa para la tabla de frecuencias
+        MOV cantidad_frecuencia,1D
+        MOV contador_frecuencia,0d
+        MOV valor_para_frecuencia,0d 
+        MOV valor_para_frecuencia_siguiente,0d 
+        MOV posicion_valor_vector_entrada,0d
+        MOV posicion_vector_frecuencia,0d
+        MOV copia_size2,0d
+        mov ax,0
+        mov bx,0
+        mov cx,0
+        mov dx,0
         
-                           
+        
+        ;-> inico del for para ir sacando la frecuencia
+        FOR_FRECUENCIA:
+        
+            ;-> reviso el tamanio del vector de entrada    
+            mov dx,size_vector 
+             
+            ;->condicion de salida para el for de frecuencia
+            cmp copia_size2,dx 
+            jge FIN_FOR_FRECUENCIA
+            
+            ;-> obtengo el valor para la frecuencia
+            GET_NUMBER_BINARY vector_entrada,posicion_valor_vector_entrada,valor_para_frecuencia 
+                         
+
+            ;-> aumenta en uno 
+            inc copia_size2
+            inc posicion_valor_vector_entrada   
+             
+
+            ;-> mueve al siguiente valor del vector de entrada y compara
+            GET_NUMBER_BINARY vector_entrada,posicion_valor_vector_entrada,valor_para_frecuencia_siguiente 
+            
+            
+            ;-> comparo los dos numero obtenidos
+            ;-> insertor si son iguales si no sigue leendo y contado
+            mov cx,valor_para_frecuencia
+            cmp valor_para_frecuencia_siguiente,cx
+            jne INSERTAR_FRECUENCIA                                                      
+            
+            
+            ;-> si no son iguales regresa para seguir con el siguiente numero del vector
+            INC cantidad_frecuencia
+            JMP FOR_FRECUENCIA  
+            
+            
+            
+            INSERTAR_FRECUENCIA:
+            
+                ;-> envio al vector de frecuencia
+                SET_VECTOR_BINARY vector_frecuencia,posicion_vector_frecuencia,valor_para_frecuencia
+                SET_VECTOR_BINARY numero_frecuencia,posicion_vector_frecuencia,cantidad_frecuencia 
+                
+                ;-> reinicio el contador de frecuencia
+                mov cantidad_frecuencia,1D 
+                
+                ;-> incremento para la siguiente posicion del vector de frecuenicas
+                INC posicion_vector_frecuencia 
+                
+                ;-> incremento el tamanio del vector de frecuencia
+                INC tamanio_vector_frecuencia
+                
+                
+                ;-> regresa para leer el siguiente numero del vector de entrada
+                JMP FOR_FRECUENCIA
+            
+        ;-> termina el ciclo for para sacar la frecuenica
+        FIN_FOR_FRECUENCIA:
+            ;->             
+            
+        ;-> imprensiones 
+        PRINT salto_linea
+        PRINT salto_linea
+        
+        ;->
+        IMPRIMIRVECTOR vector_frecuencia,tamanio_vector_frecuencia
+       
+        ;->
+        PRINT salto_linea                                                           
+                                                                   
+        ;->
+        IMPRIMIRVECTOR numero_frecuencia,tamanio_vector_frecuencia  
+      
+            
+        PRINT salto_linea
+
+        ; -> regreso para pedir otro comando
+        jmp ingreso_comando
+        
+        
+     
     ; -> se a ingreado el comando cmax
     comando_cmax:
         
