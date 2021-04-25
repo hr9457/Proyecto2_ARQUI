@@ -621,6 +621,132 @@ endm
 
 
 
+; =============== macro para ordenar la frecuencia  descendentemente
+FRECUENCIA_DES macro vector_frecuencia,vector_valor,size_vector
+    
+   local for_frecuencia_des,intercambio_frecuencia_des,for_frecuencia_j_des,fin_fre_j_des,fin_frecuencia_des
+
+    ;-------------- limpieza y copia de variables
+    mov i,0d
+    mov j,0d
+    mov temporal,0d
+    mov valor_en_posicion_j,0d   
+    mov valor_en_posicion_j_masUno,0d
+    mov volor_en_posicion_i, 0d 
+    mov siguiente_j,1d
+
+    mov ax,0
+    mov ax,size_vector 
+    mov size_copia2,ax
+    dec size_copia2
+    mov cx,0
+    mov dx,0 
+    mov bx,0
+    mov ax,0
+    mov cx,size_vector
+    mov dx,size_copia2
+    
+    
+    
+    for_frecuencia_des:
+            
+            ;-- condicion de salida
+            ;-- salta si i es mayor a dx
+            mov cx,size_vector
+            cmp i,cx
+            jnle fin_frecuencia_des              
+            
+            ;---- for interno
+            for_frecuencia_j_des:
+                
+                ;---- condicion de salida
+                mov dx,size_copia2  
+                cmp j,dx
+                jnl fin_fre_j_des
+                
+                
+                ;--- if vector[j] > vector[j+1] 
+                GET_NUMBER_BINARY vector_frecuencia,j,valor_en_posicion_j
+                GET_NUMBER_BINARY vector_frecuencia,siguiente_j,valor_en_posicion_j_masUno 
+
+                ;-----valor de referencia de la frecuenca de j+1
+                GET_NUMBER_BINARY vector_valor,siguiente_j,numero_en_posicion_j_masUno
+                
+                
+                mov ax,valor_en_posicion_j
+                mov bx,valor_en_posicion_j_masUno
+                
+                ;--- si el numero vector[j] < a vector[j+1]
+                cmp valor_en_posicion_j,bx
+                jng  intercambio_frecuencia_des  
+                
+                
+                ;--- regresa 
+                inc j
+                inc siguiente_j
+                jmp for_frecuencia_j_des
+                
+                
+                ;-- intercambio de posiciones relativos en la frecuencia
+                intercambio_frecuencia_des:
+                    
+                    ;---- INTERCAMBIA EL VALOR DE FRECUENCIAS
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_frecuencia,j,temporal
+                    
+                    ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_frecuencia,j,valor_en_posicion_j_masUno                    
+                    
+                    ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_frecuencia,siguiente_j,temporal
+
+
+                    ;----- INTERCAMBIA EL VALOR DE REFERENCIA DE ESA FRECUENCIA
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_valor,j,temporal
+
+                    ; ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_valor,j,numero_en_posicion_j_masUno  
+
+                    ; ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_valor,siguiente_j,temporal
+
+
+                
+                    
+                    ;--- regresa 
+                    inc j ;j++
+                    inc siguiente_j ;j+1 ++
+                    jmp for_frecuencia_j_des               
+                
+                
+                
+            fin_fre_j_des:
+                inc i ;i++
+                mov j,0d 
+                mov siguiente_j,1d
+                mov temporal,0
+                mov valor_en_posicion_j_masUno,0
+                mov valor_en_posicion_j,0   
+                jmp for_frecuencia_des        
+        
+            
+            
+        ;-> fin del ciclo burbuja   
+        fin_frecuencia_des:
+    
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+
+
 ;--------------------------------------------------------------- programa general ----------------------------------------------------------------------
 .model small
 .stack
@@ -759,7 +885,12 @@ endm
     copia_size2 dw 0d
     
   
-  
+    ;--------------- variables extras para el orden DES de la frecuencia
+    numero_en_posicion_j_masUno dw 0    
+    
+    
+    ;----------------- para el calcula de la moda
+    moda dw 0
 
     
   
@@ -1040,23 +1171,58 @@ endm
         ;-> termina el ciclo for para sacar la frecuenica
         FIN_FOR_FRECUENCIA:
             ;->             
-            
+
+
+        ; ------------------------ obtener la moda del vector de entrada    
         ;-> imprensiones 
-        PRINT salto_linea
-        PRINT salto_linea
+        ; PRINT salto_linea
+        ; PRINT salto_linea
         
-        ;->
-        IMPRIMIRVECTOR vector_frecuencia,tamanio_vector_frecuencia
+        ; ;->
+        ; IMPRIMIRVECTOR vector_frecuencia,tamanio_vector_frecuencia
        
-        ;->
-        PRINT salto_linea                                                           
+        ; ;->
+        ; PRINT salto_linea                                                           
                                                                    
-        ;->
-        IMPRIMIRVECTOR numero_frecuencia,tamanio_vector_frecuencia  
+        ; ;->
+        ; IMPRIMIRVECTOR numero_frecuencia,tamanio_vector_frecuencia  
       
             
-        PRINT salto_linea
+        ; PRINT salto_linea    
+        ; PRINT salto_linea
+        
+        ;-> macro para ordenar la tabla de frecuencia segun la frecuencia de los datos de entrada
+        FRECUENCIA_DES numero_frecuencia,vector_frecuencia,tamanio_vector_frecuencia 
+        
+        
+        ; PRINT salto_linea    
+        ; PRINT salto_linea
+                         
+        ; IMPRIMIRVECTOR vector_frecuencia,tamanio_vector_frecuencia               
+                                  
+                                  
+        ; PRINT salto_linea    
+        ; PRINT salto_linea                          
+        
+        ; IMPRIMIRVECTOR numero_frecuencia,tamanio_vector_frecuencia
+        
+        
+        ; PRINT salto_linea    
+        ; PRINT salto_linea    
 
+        ;-> obtener el primer valor de la frecuencia 
+        GET_NUMBER_BINARY vector_frecuencia,0,moda
+        
+        ; PRINT salto_linea    
+
+        ;->impresion del comando de consola
+        PRINT comando_consola 
+                          
+        NUMBER_BINARY_ASCII moda                 
+
+        PRINT salto_linea    
+        PRINT salto_linea      
+        
         ; -> regreso para pedir otro comando
         jmp ingreso_comando
         
@@ -1239,7 +1405,7 @@ endm
             
         ;-> verificaicon la lectura es un numero
         es_numero: 
-            PRINT fragmento
+            ; PRINT fragmento
             inc contador_numeros_entrada
             
             ;-> se toma el fragmento y se empuja a la pila
@@ -1262,7 +1428,7 @@ endm
             cmp contador_numeros_entrada,0
             je leer
             
-            PRINT_CARACTER '-'
+            ; PRINT_CARACTER '-'
             
             ; -> union de los numeros
             ; -> comparacion para saber cuantos digitos hay que unir
