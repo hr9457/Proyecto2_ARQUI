@@ -893,7 +893,20 @@ endm
     moda dw 0
 
     
-  
+    ;------------------ utilidades para calcular la mediana 
+    mediana dw 0 
+    mediana_siguiente dw 0
+    
+    cociente_mediana dw 0
+    residuo_mediana dw 0 
+    copia_size3 dw 0d  
+    
+    posicion_de_mediana dw 0 
+    posicion_de_mediana_siguiente dw 0    
+    suma_mediana dw 0    
+    
+    decimales_mediana dw 0 
+    decimal_mediana dw 0
   
 
 .code 
@@ -907,6 +920,7 @@ endm
     LIMPIAR_PANTALLA
 
 
+   ;************************************************************************************************************ 
    ; --> arranque del programa
    ; --> arranque del programa
     ingreso_comando:  
@@ -956,12 +970,16 @@ endm
         SWITCH_CASE_CADENAS
        
 
-        
+    ;************************************************************************************************************ 
     ; -> cuando los token no coniciden    
     diferente:
         PRINT msg_diferentes
-        .exit              
-       
+        .exit  
+
+
+
+
+    ;************************************************************************************************************   
     ; -> se a ingresado el comando cprom
     comando_cprom:
         
@@ -1087,12 +1105,167 @@ endm
         
         
         
-        
+    ;************************************************************************************************************  
     ; -> se a ingreado el comando cmediana
-    comando_cmediana:
-        PRINT msg_iguales
-        jmp ingreso_comando               
+    comando_cmediana:  
+    
+        ;-> se ordena de menor a mayor
+        ;-> ordena de menor a mayor se obtiene el primer valor
+        ; -> prueba para ver el ordenamiento burbuja ascendente
+        ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector
         
+    
+        ; PAUSA_PANTALLA
+
+        ;-> limpiamos registro para trabajar
+        mov ax,0
+        mov bx,0
+        mov cx,0
+        mov dx,0
+
+        ;hacemos una copia del tamanio del vector de entrada
+        mov dx,size_vector
+
+        mov copia_size3,dx 
+
+        ; limpiamos 
+        mov dx,0
+
+        ; divimos el tamanio del vector en dos para saber si es par o impar
+        mov ax,copia_size3
+        mov bx,2
+        div bx  
+        
+        
+        ; comparamos el residuo para saber si el numero es par o impar
+        ; dx = 0 es par
+        ; dx != 0 es impar 
+        
+        ; si dx = 
+        cmp dx,0D
+        je MEDIANA_PAR 
+        
+        jmp MEDIANA_IMPAR 
+        
+        
+        
+        ; -> CUANDO EL NUMERO SEA PAR
+        MEDIANA_PAR:                  
+            ;->
+            mov posicion_de_mediana,ax 
+            DEC posicion_de_mediana 
+            
+            mov dx,0
+            mov dx,posicion_de_mediana
+            mov posicion_de_mediana_siguiente,dx
+            INC posicion_de_mediana_siguiente 
+                                                       
+                                                       
+            ;-> OBTENGO LOS VALORES DE ESAS POSICIONES 
+            ;-> obtner la mediana del vector de entrada
+            GET_NUMBER_BINARY vector_entrada,posicion_de_mediana,mediana
+            
+            ;-> obtner la mediana del vector de entrada
+            GET_NUMBER_BINARY vector_entrada,posicion_de_mediana_siguiente,mediana_siguiente 
+            
+            ;-> SE REALIZA LA SUMA 
+            mov ax,0
+            mov ax,mediana
+            add ax,mediana_siguiente
+            mov mediana,ax
+            
+            ;-> DIVIDE ENTRE 2
+            mov ax,0
+            mov ax,mediana
+            mov bx,2D
+            div bx 
+            
+            mov cociente_mediana,ax 
+            mov residuo_mediana,dx 
+            
+            
+            ;->impresion del comando de consola
+            PRINT comando_consola
+            
+            ;-> se imprime la mediana cuando es par  
+            NUMBER_BINARY_ASCII cociente_mediana 
+            
+            
+            ;-> IMPRESION DEL PUNTO 
+            PRINT_CARACTER '.'  
+            
+            
+            ;->DECIMAL DE LA MEDIANA
+            FOR_DECIMAL_MEDIANA:
+                mov ax,0D
+                mov ax,residuo_mediana
+                                     
+                ;-> CONDICION DE SALIDA DE CICLO                      
+                cmp decimales_mediana,1D
+                je FIN_FOR_DECIMAL_MEDIANA 
+                
+                ;->LIMPIEZA
+                mov bx,0D
+                mov bx,10D
+                mul bx  
+                
+                mov bx,0D
+                mov bx,2D
+                div bx
+                mov decimal_mediana,ax
+                
+                NUMBER_BINARY_ASCII decimal_mediana
+                
+                
+            
+            ;->FINALIZACION DEL CICLO    
+            FIN_FOR_DECIMAL_MEDIANA:
+            
+            
+            
+            PRINT salto_linea
+            PRINT salto_linea
+            
+            
+            
+            
+            ;-> REGRESA PARA PEDIR UN SIGUIENTE COMANDO
+            jmp ingreso_comando  
+            
+            
+            
+        ;-> CUANDO EL NUMERO SEA IMPAR    
+        MEDIANA_IMPAR: 
+            
+            ;->
+            MOV posicion_de_mediana,ax
+            ;INC posicion_de_mediana
+            
+            
+            ;-> obtner la mediana del vector de entrada
+            GET_NUMBER_BINARY vector_entrada,posicion_de_mediana,mediana 
+            
+            ;->
+            PRINT salto_linea
+            
+            ;->impresion del comando de consola
+            PRINT comando_consola
+            
+            ;-> se imprime la mediana cuando es par  
+            NUMBER_BINARY_ASCII mediana 
+            
+            PRINT salto_linea
+            PRINT salto_linea
+            
+            
+            jmp ingreso_comando
+        
+
+
+
+
+
+    ;************************************************************************************************************   
     ; -> se a ingreado el comando cmoda
     comando_cmoda:         
                   
@@ -1228,6 +1401,7 @@ endm
         
         
      
+    ;************************************************************************************************************  
     ; -> se a ingreado el comando cmax
     comando_cmax:
         
@@ -1254,6 +1428,7 @@ endm
 
 
     
+    ;************************************************************************************************************ 
     ; -> se a ingresado el comando cmin
     comando_cmin:
         
@@ -1280,42 +1455,49 @@ endm
 
 
     
-        
+    ;************************************************************************************************************    
     ; -> se a ingresado el comando gbarra_asc
     comando_gbarra_asc:
         PRINT msg_iguales
         jmp ingreso_comando
             
-        
+
+    ;************************************************************************************************************     
     ; -> se a ingresado el comando gbrarra_des
     comando_gbarra_desc:
         PRINT msg_iguales
         jmp ingreso_comando    
         
-        
+
+    ;************************************************************************************************************    
     ; -> se a ingresado el comando ghist
     comando_ghist:
         PRINT msg_iguales
         jmp ingreso_comando    
-        
+
+
+    ;************************************************************************************************************     
     ; -> se a ingreado el comando glinea
     comando_glinea:
         PRINT msg_iguales
         jmp ingreso_comando
             
    
+    ;************************************************************************************************************ 
     ; -> se a ingresado el comando para limpiar
     comando_limpiar:
         LIMPIAR_PANTALLA
         jmp ingreso_comando
     
     
+    ;************************************************************************************************************ 
     ; -> se a ingresado para creacion de reportes
     comando_reporte:
         PRINT msg_iguales
         jmp ingreso_comando
     
 
+    ;************************************************************************************************************ 
     ; -> se a ingresado el comando para ver la informacion por pantalla
     comando_informacion:
         PRINT salto_linea
@@ -1325,6 +1507,7 @@ endm
 
 
 
+    ;************************************************************************************************************ 
     ; -> se a ingresado el comando para abrir un archivo
     comando_abrir:
         ;PRINT msg_apertura_archivo
@@ -1619,6 +1802,7 @@ endm
         jmp ingreso_comando
     
 
+    ;************************************************************************************************************ 
     ; --> opcion de salida
     salir:  
         .exit
