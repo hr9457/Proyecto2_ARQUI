@@ -742,6 +742,145 @@ endm
 
 
 
+; ========== macro para escribir en archivo de reporte
+WRITE_IN_FILE macro cadena,tamanio_cadena
+
+    mov ah,40h
+    mov bx,handler2
+    mov cx,tamanio_cadena
+    mov dx,0
+    mov dx,offset cadena 
+    int 21h 
+
+endm 
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+; ========== macro para escribir numero en el reporte txt
+DATE_WRITE_IN_FILE macro numero,contador
+
+    local DOWHILE,ESCRIBIR_ASCII_TXT,FIN_ESCRIBIR_ASCII_TXT
+
+    ;->limpieza
+    mov contador,0D
+    mov dx,0d
+    mov ax,0d
+
+    mov al,numero 
+
+    DOWHILE:
+
+        MOV DX,0D
+        MOV CX,10D
+        DIV CX 
+
+        ;-> empuje a la pila y aumento numero en pila
+        PUSH DX
+        INC contador
+
+        ;-> comparamo el resultado del cociente
+        CMP Al,0
+        JNLE DOWHILE
+
+    
+    ;-> scando de la pila para escirbir en el archivo de txt
+    MOV AX,0
+
+    ESCRIBIR_ASCII_TXT:
+
+        ;-> condicion de salida
+        ;-> salta si el contador es igual a 0
+        CMP contador,0
+        JE FIN_ESCRIBIR_ASCII_TXT
+
+        POP DX
+        MOV numero_ingresador_en_pila,dx
+        ADD numero_ingresador_en_pila,30h
+        DEC contador
+
+        ;->ESCRIBE ENEL ARCHIVO DE TEXTO
+        WRITE_IN_FILE numero_ingresador_en_pila,1D
+
+
+        ;-> repite el ciclo 
+        JMP ESCRIBIR_ASCII_TXT
+
+
+    ;-> finalizacion del ciclo 
+    FIN_ESCRIBIR_ASCII_TXT:
+
+endm 
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+; ========== macro para escribir numero en el reporte txt
+NUMBERS_WRITE_IN_FILE macro numero,contador
+
+    local DOWHILE2,ESCRIBIR_ASCII_TXT2,FIN_ESCRIBIR_ASCII_TXT2
+
+    ;->limpieza
+    mov contador,0D
+    mov dx,0d
+    mov ax,0d
+
+    mov ax,numero 
+
+    DOWHILE2:
+
+        MOV DX,0D
+        MOV CX,10D
+        DIV CX 
+
+        ;-> empuje a la pila y aumento numero en pila
+        PUSH DX
+        INC contador
+
+        ;-> comparamo el resultado del cociente
+        CMP Al,0
+        JNLE DOWHILE2
+
+    
+    ;-> scando de la pila para escirbir en el archivo de txt
+    MOV AX,0
+
+    ESCRIBIR_ASCII_TXT2:
+
+        ;-> condicion de salida
+        ;-> salta si el contador es igual a 0
+        CMP contador,0
+        JE FIN_ESCRIBIR_ASCII_TXT2
+
+        POP DX
+        MOV numero_ingresador_en_pila,dx
+        ADD numero_ingresador_en_pila,30h
+        DEC contador
+
+        ;->ESCRIBE ENEL ARCHIVO DE TEXTO
+        WRITE_IN_FILE numero_ingresador_en_pila,1D
+
+
+        ;-> repite el ciclo 
+        JMP ESCRIBIR_ASCII_TXT2
+
+
+    ;-> finalizacion del ciclo 
+    FIN_ESCRIBIR_ASCII_TXT2:
+
+endm 
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
 
 
 
@@ -907,6 +1046,72 @@ endm
     
     decimales_mediana dw 0 
     decimal_mediana dw 0
+
+
+    ; ------------------ utilidades para crear el reporte txt
+    archivo_reporte db 'reporte.txt',0
+    handler2 dw ?
+    contador_pila dw 0 
+    numero_ingresador_en_pila dw 0
+    
+
+
+    dia db 0
+    mes db 0 
+    anio dw 0 
+    txt_anio_2021 db '2021','$';4
+    txt_separador_fecha db '-','$';1
+
+
+    hora db 0
+    minutos db 0
+    segundos db 0 
+    txt_separador_tiempo db ':','$';1
+
+
+    ;separador par decimales
+    txt_punto_decimal db '.','$';1
+
+    ; PARA AGREGAR DECIMALES AL ARCHIVO DE TEXTO
+    decimal_txt dw 0
+
+    ;promedio
+    promedio_parte_entera dw 0
+    promedio_residuo  dw 0 
+
+
+
+
+    txt_nueva_linea db ' ',13,10,'$';2
+
+    txt_encabezado  db "Universidad de San Carlos de Guatemala",13,10;39
+                    db "Facultad de Ingenieria",13,10;23				
+                    db "Arquitectura de Computadores y Ensambladores 1",13,10;47
+                    db "Primer Semestre 2021",13,10;21
+                    db "Seccion A",13,10;10
+                    db "Hector Josue Orozco Salazar",13,10;28
+                    db "201314296",13,10,'$';10
+
+    txt_promedio    db "Promedio: ",'$';10
+    txt_mediana     db "Mediana: ",'$';9
+    txt_moda        db "Moda: ",'$';6
+    txt_maximo      db "Maximo: ",'$';8
+    txt_minimo      db "Minimo: ",'$';8
+
+    txt_tabla_frecuencia    db  "Tabla de Frecuenicas: ",13,10,'$';23 
+
+
+
+    msg_error_creacion_archivo db 'Error: No se puede crear el archivo',10,13,'$'
+    msg_error_escritura_archivo db 'Error: No se pudo escribir en el archivo',10,13,'$'
+    msg_exito_reporte db 'Reporte creado con exito',10,13,'$'
+
+
+
+
+
+
+
   
 
 .code 
@@ -1037,8 +1242,14 @@ endm
         ; -> guardo la parte entera de la divison
         mov parte_entera,ax
         
+        ;-> guardo la parte entera para el reporte txt
+        mov promedio_parte_entera,ax 
+        
         ; -> guardo la parte para calcular los decimales
         mov residuo,dx     
+
+        ;-> guardo el residuo para imprimirlos en el reporte txt
+        mov promedio_residuo,dx
         
         
         ;-> IMPRESION DEL RESULTADO DEL PROMEDIO 
@@ -1488,14 +1699,216 @@ endm
     comando_limpiar:
         LIMPIAR_PANTALLA
         jmp ingreso_comando
+
+
+
     
     
     ;************************************************************************************************************ 
     ; -> se a ingresado para creacion de reportes
     comando_reporte:
-        PRINT msg_iguales
+        
+        ; Generacion y Escritura del reporte en TXT
+
+        ; Limpieza de los registros para trabajar el reporte
+        mov ax,0
+        mov bx,0
+        mov dx,0
+        mov cx,0
+
+        inicio_reporte:
+            ;creacion del archvio
+            mov ah,3ch
+            mov cx,0
+            mov dx,offset archivo_reporte
+            int 21h
+
+
+            ;si hay error en la creacion del archivo 
+            jc error_creacion_archivo
+            mov handler2,ax
+
+
+            ; escritura del encabezado en el reporte
+            WRITE_IN_FILE txt_encabezado,183D
+
+            ;-- separacion
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+            ;/////////////////////////////////
+            ; escirtura de fecha y hora
+            ;DIA MES ANIO
+            mov ah,2Ah
+            int 21h
+
+            mov dia,dl;dia 
+            mov mes,dh;mes
+
+            ;->escritura de dia 
+            DATE_WRITE_IN_FILE dia,contador_pila
+            ;->separador
+            WRITE_IN_FILE txt_separador_fecha,1D
+            ;-> escritura del mes
+            DATE_WRITE_IN_FILE mes,contador_pila
+            ;->separador
+            WRITE_IN_FILE txt_separador_fecha,1D
+            ;-> escritura del anio
+            WRITE_IN_FILE txt_anio_2021,4D
+
+            ;-- separacion
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+            ;///////////////////////////////////
+            mov ah,2CH
+            int 21h
+
+            mov hora,ch
+            mov minutos,cl
+            mov segundos,dh 
+
+            ;-> escritura de hora
+            DATE_WRITE_IN_FILE hora,contador_pila
+            ;->separador
+            WRITE_IN_FILE txt_separador_tiempo,1D
+            ;-> escritura de los minutos
+            DATE_WRITE_IN_FILE minutos,contador_pila
+            ;->separador
+            WRITE_IN_FILE txt_separador_tiempo,1D
+            ;-> escritura de los segundos
+            DATE_WRITE_IN_FILE segundos,contador_pila
+
+
+            ;///////////////////////////////////
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+
+
+            ; **** escritura del promedio obtenido ****
+            WRITE_IN_FILE txt_promedio,10D
+            ; parte entera
+            NUMBERS_WRITE_IN_FILE promedio_parte_entera,contador_pila
+            ; punto 
+            WRITE_IN_FILE txt_punto_decimal,1D
+            
+            ;//////////////////////////////////////
+            ;-> escritura de parte decimal 
+            mov contador_decimales,0D
+            FOR_DECIMALES_TXT:
+                mov ax,0D
+                mov ax,promedio_residuo
+
+                ;-> condicion de salid del ciclo
+                CMP contador_decimales,3D
+                je FIN_DECIMALES_TXT
+
+                ;->limpieza
+                mov bx,0D
+                mov bx,10D
+                mul bx
+
+                mov bx,0D
+                mov bx,size_vector
+                div bx
+                mov decimal_txt,ax
+                mov promedio_residuo,dx 
+
+                ;ímpresion en el archivo de texto
+                NUMBERS_WRITE_IN_FILE decimal_txt,contador_pila
+
+                inc contador_decimales
+
+                JMP FOR_DECIMALES_TXT
+
+
+            FIN_DECIMALES_TXT:
+            ;/////////////////////////////////
+
+
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+
+
+            ; **** escritura de la mediana obtenida ****
+            WRITE_IN_FILE txt_mediana,9D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+
+            ; **** escritura de la moda obtenida ****
+            WRITE_IN_FILE txt_moda,6D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+            ; escritura del maximo obtenido
+            WRITE_IN_FILE txt_maximo,8D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+            ; escritura del minimo obtenido
+            WRITE_IN_FILE txt_minimo,8D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+
+            ;-- separacion
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+            WRITE_IN_FILE txt_nueva_linea,3D
+
+
+            ; escritura de la tabla de frecuencia
+            WRITE_IN_FILE txt_tabla_frecuencia,23D
+
+
+
+
+
+
+            ; si hay error en la escritura del archivo, CF=1
+            jc error_escritura_reporte
+
+            jmp fin_creacion_reporte
+
+
+        ;  si s eencuentra un error en la creacion del archivo
+        error_creacion_archivo: 
+             PRINT salto_linea
+             PRINT msg_error_creacion_archivo  
+             PAUSA_PANTALLA
+             jmp ingreso_comando 
+
+            
+            
+
+        ; si se genera un error duarante la escirtura del archivo    
+         error_escritura_reporte:
+             PRINT salto_linea
+             PRINT msg_error_escritura_archivo
+             PAUSA_PANTALLA 
+             jmp ingreso_comando
+
+
+
+
+        ; cierre del archivo 
+        fin_creacion_reporte:
+            mov ah,3eh
+            mov bx,handler2
+            int 21h
+
+            PRINT msg_exito_reporte
+            PRINT salto_linea
+
+
+
+        ; finalizacion de la generacion del reporte - regresa a pedir otro comando
         jmp ingreso_comando
+
+
+
     
+
+
 
     ;************************************************************************************************************ 
     ; -> se a ingresado el comando para ver la informacion por pantalla
@@ -1504,6 +1917,9 @@ endm
         PRINT msg_informacion
         PRINT salto_linea
         jmp ingreso_comando
+
+
+
 
 
 
