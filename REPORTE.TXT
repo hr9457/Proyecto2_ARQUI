@@ -8,14 +8,14 @@ Hector Josue Orozco Salazar
  
  
 28-4-2021 
-17:46:42 
+18:21:43 
  
  
 Promedio: 531.400 
-Mediana:  
-Moda:  
-Maximo:  
-Minimo:  
+Mediana: 678.0 
+Moda: 155 
+Maximo: 960 
+Minimo: 17 
  
  
  

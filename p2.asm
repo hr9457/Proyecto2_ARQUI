@@ -1079,6 +1079,9 @@ endm
     promedio_parte_entera dw 0
     promedio_residuo  dw 0 
 
+    ;mediana
+    mediana_parte_entera dw 0
+    mediana_parte_decimal dw 0 
 
 
 
@@ -1395,6 +1398,9 @@ endm
             mov residuo_mediana,dx 
             
             
+            ;-> guardo la parte entera para escribir en el reporte
+            mov mediana_parte_entera,ax 
+
             ;->impresion del comando de consola
             PRINT comando_consola
             
@@ -1424,6 +1430,9 @@ endm
                 mov bx,2D
                 div bx
                 mov decimal_mediana,ax
+
+                ;->guardo la parte decimal para imprimir en el report txt
+                mov mediana_parte_decimal,ax 
                 
                 NUMBER_BINARY_ASCII decimal_mediana
                 
@@ -1455,6 +1464,12 @@ endm
             
             ;-> obtner la mediana del vector de entrada
             GET_NUMBER_BINARY vector_entrada,posicion_de_mediana,mediana 
+
+
+            ;-> guardo la mediana cuando es para para el reporte txt
+            mov cx,0
+            mov cx,mediana 
+            mov mediana_parte_entera,cx 
             
             ;->
             PRINT salto_linea
@@ -1834,19 +1849,41 @@ endm
 
             ; **** escritura de la mediana obtenida ****
             WRITE_IN_FILE txt_mediana,9D
+            ;impresion de la parte entera
+            NUMBERS_WRITE_IN_FILE mediana_parte_entera,contador_pila
+            ; punto
+            WRITE_IN_FILE txt_punto_decimal,1D 
+            ; parte decimal
+            NUMBERS_WRITE_IN_FILE mediana_parte_decimal,contador_pila
+            ;
             WRITE_IN_FILE txt_nueva_linea,3D
+
 
 
             ; **** escritura de la moda obtenida ****
             WRITE_IN_FILE txt_moda,6D
+            ; numero de moda obtenido
+            NUMBERS_WRITE_IN_FILE moda,contador_pila
+            ;
             WRITE_IN_FILE txt_nueva_linea,3D
 
-            ; escritura del maximo obtenido
+
+
+            ; **** escritura del maximo obtenido ****
             WRITE_IN_FILE txt_maximo,8D
+            ;
+            NUMBERS_WRITE_IN_FILE valor_maximo,contador_pila
+            ;
             WRITE_IN_FILE txt_nueva_linea,3D
 
-            ; escritura del minimo obtenido
+
+
+
+            ; **** escritura del minimo obtenido *****
             WRITE_IN_FILE txt_minimo,8D
+            ;
+            NUMBERS_WRITE_IN_FILE valor_minimo,contador_pila
+            ;
             WRITE_IN_FILE txt_nueva_linea,3D
 
 
@@ -1856,6 +1893,8 @@ endm
             WRITE_IN_FILE txt_nueva_linea,3D
 
 
+
+            
             ; escritura de la tabla de frecuencia
             WRITE_IN_FILE txt_tabla_frecuencia,23D
 
