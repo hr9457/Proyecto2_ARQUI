@@ -1084,6 +1084,14 @@ endm
     mediana_parte_decimal dw 0 
 
 
+    ;CONTADOR PARA ESCRIBIR LA FRECUENCIA
+    contador_escritura_frecuencia dw 0
+    numero_frecuencia_a_escribir dw 0
+    valor_de_frecuencia_a_escribir dw 0
+
+
+    txt_separador_frecuencia db '<---->','$';6
+
 
     txt_nueva_linea db ' ',13,10,'$';2
 
@@ -1894,10 +1902,54 @@ endm
 
 
 
-            
+
             ; escritura de la tabla de frecuencia
             WRITE_IN_FILE txt_tabla_frecuencia,23D
 
+
+
+            MOV contador_escritura_frecuencia,0D
+            ;-> escritura de tabla de frecuencia
+            FOR_ESCRIBIR_TABLA_FRECUENCIA:
+
+                MOV cx,contador_escritura_frecuencia
+
+                ; comparacion para condicion de salida
+                CMP cx,tamanio_vector_frecuencia
+                JE FIN_ESCRIBIR_TABLA_FRECUENCIA
+
+
+                ; obtener los valore para escribir
+                GET_NUMBER_BINARY vector_frecuencia,contador_escritura_frecuencia,numero_frecuencia_a_escribir
+                ;
+                GET_NUMBER_BINARY numero_frecuencia,contador_escritura_frecuencia,valor_de_frecuencia_a_escribir
+
+
+                ;---- escritura en el archivo de texto 
+
+                ; numero de la frecuencia del numero
+                NUMBERS_WRITE_IN_FILE numero_frecuencia_a_escribir,contador_pila
+
+                ; SEPARADOR
+                WRITE_IN_FILE txt_separador_frecuencia,6D
+
+                ;valor de la frecuencia
+                NUMBERS_WRITE_IN_FILE valor_de_frecuencia_a_escribir,contador_pila
+
+                ;salto linea
+                WRITE_IN_FILE txt_nueva_linea,3D
+
+
+
+                ; incremento para cambiar a la siguiente posicion 
+                INC contador_escritura_frecuencia
+
+                ; repite el ciclo 
+                JMP FOR_ESCRIBIR_TABLA_FRECUENCIA
+
+
+
+            FIN_ESCRIBIR_TABLA_FRECUENCIA:
 
 
 
@@ -1909,12 +1961,15 @@ endm
             jmp fin_creacion_reporte
 
 
+
+
         ;  si s eencuentra un error en la creacion del archivo
         error_creacion_archivo: 
              PRINT salto_linea
              PRINT msg_error_creacion_archivo  
              PAUSA_PANTALLA
-             jmp ingreso_comando 
+             jmp fin_creacion_reporte
+            ;  jmp ingreso_comando 
 
             
             
@@ -1924,7 +1979,8 @@ endm
              PRINT salto_linea
              PRINT msg_error_escritura_archivo
              PAUSA_PANTALLA 
-             jmp ingreso_comando
+             jmp fin_creacion_reporte
+            ;  jmp ingreso_comando
 
 
 
