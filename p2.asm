@@ -1030,6 +1030,7 @@ endm
     
     ;----------------- para el calcula de la moda
     moda dw 0
+    moda2 dw 0
 
     
     ;------------------ utilidades para calcular la mediana 
@@ -1199,6 +1200,11 @@ endm
     ; -> se a ingresado el comando cprom
     comando_cprom:
         
+        ; reinicio de variables
+        MOV suma_total,0D
+        MOV posicion_valor,0D
+        MOV decimales,0D
+        MOV contador_decimales,0D
             
         mov ax,0
         mov bx,0  
@@ -1501,7 +1507,11 @@ endm
 
     ;************************************************************************************************************   
     ; -> se a ingreado el comando cmoda
-    comando_cmoda:         
+    comando_cmoda:  
+
+        MOV moda,0D       
+        MOV moda2,0D
+        MOV tamanio_vector_frecuencia,0D
                   
         ;-> orden de menor a mayor
         ORDENAMIENTO_BURBUJA_ASC vector_entrada,size_vector  
@@ -1619,6 +1629,8 @@ endm
 
         ;-> obtener el primer valor de la frecuencia 
         GET_NUMBER_BINARY vector_frecuencia,0,moda
+
+        GET_NUMBER_BINARY vector_frecuencia,1D,moda2
         
         ; PRINT salto_linea    
 
@@ -1628,7 +1640,14 @@ endm
         NUMBER_BINARY_ASCII moda                 
 
         PRINT salto_linea    
-        PRINT salto_linea      
+        PRINT salto_linea    
+
+        PRINT comando_consola
+
+        NUMBER_BINARY_ASCII moda2
+
+        PRINT salto_linea    
+        PRINT salto_linea 
         
         ; -> regreso para pedir otro comando
         jmp ingreso_comando
@@ -2021,6 +2040,13 @@ endm
     ;************************************************************************************************************ 
     ; -> se a ingresado el comando para abrir un archivo
     comando_abrir:
+        ;REINICIO DE VARIABLES PARA LA LECTURA DE UN NUEVO VECTOR 
+        MOV posicion_en_comando,6D
+        MOV posicion_nombre_archivo,0D
+        MOV contador_numeros_entrada,0D
+        MOV posicion_vector_entrada,0D
+        MOV size_vector,0D
+
         ;PRINT msg_apertura_archivo
         ;PAUSA_PANTALLA
         ;PRINT salto_linea
