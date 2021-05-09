@@ -881,6 +881,74 @@ endm
 
 
 
+; ========== macro para pintar un pixel en pantalla
+PINTAR macro posicionX,posiscionY,color
+    mov ax,0D
+    mov cx,0D
+    mov dx,0D
+    mov al,color
+    mov cx,posicionX
+    mov dx,479D
+    sub dx,posiscionY
+    mov ah,0ch
+    int 10h
+endm 
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+; ========== macro para pintar un rectangulo
+PINTAR_BARRA macro X,Y,ancho,alto,color
+    local for_barra,finFor_barra,for2_barra,finFor2_barra
+    
+    ; limpieza de los registros
+    mov ax,0D
+    mov bx,0D
+    mov cx,0D
+    mov dx,0D
+
+    mov contador4,0d
+    
+    for_barra:
+        mov ax,alto
+        cmp contador4,ax
+        jge finFor_barra
+        
+        mov contador5,0d
+        
+        for2_barra:
+            mov ax,ancho
+            cmp contador5,ax
+            jge finFor2_barra
+            
+            mov ax,contador5
+            add ax,X
+            mov posicionX,ax
+            
+            mov ax,contador4
+            add ax,Y
+            mov posicionY,ax
+            
+            PINTAR posicionX,posicionY,color
+            
+            inc contador5   
+            jmp for2_barra
+            
+         finFor2_barra:
+         
+         
+         inc contador4
+         jmp for_barra
+         
+         
+     finFor_barra:
+
+
+endm 
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
 
 
 
@@ -1121,6 +1189,17 @@ endm
 
 
 
+    ;------------------------- utilidade para pintar un barra
+    ancho_barra dw 0d
+    alto_barra dw 0d
+    contadorRectangulos dw 0d
+    contadorImpresion dw 0d
+    contador3 dw 0d 
+    contador4 dw 0d
+    contador5 dw 0d 
+    contador6 dw 0d  
+    posicionX dw 0d
+    posicionY dw 0d
 
 
 
@@ -1711,7 +1790,21 @@ endm
     ;************************************************************************************************************    
     ; -> se a ingresado el comando gbarra_asc
     comando_gbarra_asc:
-        PRINT msg_iguales
+
+        ; limpieza de pantalla
+        LIMPIAR_PANTALLA
+
+        mov ah,00h
+        mov al,12h
+        int 10h
+
+        PINTAR_BARRA 40d,0d,10d,300d,0fh    
+
+        PAUSA_PANTALLA
+
+        LIMPIAR_PANTALLA
+
+        ;PRINT msg_iguales
         jmp ingreso_comando
             
 
