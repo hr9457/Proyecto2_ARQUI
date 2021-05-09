@@ -742,6 +742,132 @@ endm
 
 
 
+; =============== macro para ordenar la frecuencia  descendentemente
+FRECUENCIA_ASC macro vector_frecuencia,vector_valor,size_vector
+    
+   local for_frecuencia_asc, intercambio_frecuencia_asc, for_frecuencia_j_asc, fin_fre_j_asc, fin_frecuencia_asc
+
+    ;-------------- limpieza y copia de variables
+    mov i,0d
+    mov j,0d
+    mov temporal,0d
+    mov valor_en_posicion_j,0d   
+    mov valor_en_posicion_j_masUno,0d
+    mov volor_en_posicion_i, 0d 
+    mov siguiente_j,1d
+
+    mov ax,0
+    mov ax,size_vector 
+    mov size_copia2,ax
+    dec size_copia2
+    mov cx,0
+    mov dx,0 
+    mov bx,0
+    mov ax,0
+    mov cx,size_vector
+    mov dx,size_copia2
+    
+    
+    
+    for_frecuencia_asc:
+            
+            ;-- condicion de salida
+            ;-- salta si i es mayor a dx
+            mov cx,size_vector
+            cmp i,cx
+            jnle fin_frecuencia_asc              
+            
+            ;---- for interno
+            for_frecuencia_j_asc:
+                
+                ;---- condicion de salida
+                mov dx,size_copia2  
+                cmp j,dx
+                jnl fin_fre_j_asc
+                
+                
+                ;--- if vector[j] > vector[j+1] 
+                GET_NUMBER_BINARY vector_frecuencia,j,valor_en_posicion_j
+                GET_NUMBER_BINARY vector_frecuencia,siguiente_j,valor_en_posicion_j_masUno 
+
+                ;-----valor de referencia de la frecuenca de j+1
+                GET_NUMBER_BINARY vector_valor,siguiente_j,numero_en_posicion_j_masUno
+                
+                
+                mov ax,valor_en_posicion_j
+                mov bx,valor_en_posicion_j_masUno
+                
+                ;--- si el numero vector[j] < a vector[j+1]
+                cmp valor_en_posicion_j,bx
+                jg  intercambio_frecuencia_asc  
+                
+                
+                ;--- regresa 
+                inc j
+                inc siguiente_j
+                jmp for_frecuencia_j_asc
+                
+                
+                ;-- intercambio de posiciones relativos en la frecuencia
+                intercambio_frecuencia_asc:
+                    
+                    ;---- INTERCAMBIA EL VALOR DE FRECUENCIAS
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_frecuencia,j,temporal
+                    
+                    ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_frecuencia,j,valor_en_posicion_j_masUno                    
+                    
+                    ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_frecuencia,siguiente_j,temporal
+
+
+                    ;----- INTERCAMBIA EL VALOR DE REFERENCIA DE ESA FRECUENCIA
+                    ;--- temporal = vector[j]
+                    GET_NUMBER_BINARY vector_valor,j,temporal
+
+                    ; ;--- vector[j] = vector[j+1] 
+                    SET_VECTOR_BINARY vector_valor,j,numero_en_posicion_j_masUno  
+
+                    ; ;--- vector[j+1] = temporal 
+                    SET_VECTOR_BINARY vector_valor,siguiente_j,temporal
+
+
+                
+                    
+                    ;--- regresa 
+                    inc j ;j++
+                    inc siguiente_j ;j+1 ++
+                    jmp for_frecuencia_j_asc                
+                
+                
+                
+            fin_fre_j_asc:
+                inc i ;i++
+                mov j,0d 
+                mov siguiente_j,1d
+                mov temporal,0
+                mov valor_en_posicion_j_masUno,0
+                mov valor_en_posicion_j,0   
+                jmp for_frecuencia_asc         
+        
+            
+            
+        ;-> fin del ciclo burbuja   
+        fin_frecuencia_asc:
+    
+
+endm
+; - - - - - - - - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+
+
+
+
+
 ; ========== macro para escribir en archivo de reporte
 WRITE_IN_FILE macro cadena,tamanio_cadena
 
@@ -1200,6 +1326,12 @@ endm
     contador6 dw 0d  
     posicionX dw 0d
     posicionY dw 0d
+    contador7 dw 0d
+    espacio_inicial dw 10d
+    alto_barra_pintar dw 0d
+    alto_barra_rescalada dw 0d
+    valor_mas_alto_frecuencia dw 0d
+
 
 
 
@@ -1791,28 +1923,170 @@ endm
     ; -> se a ingresado el comando gbarra_asc
     comando_gbarra_asc:
 
+        ;limpieza
+        mov contador7,0d
+        mov alto_barra,0d
+        mov espacio_inicial,10d
+        mov alto_barra_rescalada,0d
+        mov valor_mas_alto_frecuencia,0d
+
         ; limpieza de pantalla
         LIMPIAR_PANTALLA
 
+        ; inicio del modo de vido 
         mov ah,00h
         mov al,12h
         int 10h
 
-        PINTAR_BARRA 40d,0d,10d,300d,0fh    
+        ; PINTAR_BARRA 10d,5d,10d,400d,0fh    
 
+        ; macro para ordenar la tabla de frecuencia
+        ; ordenamiento de la tabla de frecuencia de forma ascendente
+        FRECUENCIA_ASC numero_frecuencia,vector_frecuencia,tamanio_vector_frecuencia
+
+        ; busco el valor mas alto de la frecuencia
+        ; para hacer la operacion en la redimension
+        GET_NUMBER_BINARY numero_frecuencia,tamanio_vector_frecuencia,valor_mas_alto_frecuencia
+
+        
+
+
+        ;->recorrer la tabla de frecuencia y pintar
+        recorrer_tabla_frecuencia_asc:
+            mov bx,0d
+            mov bx,tamanio_vector_frecuencia
+            cmp contador7,bx
+            jge fin_recorrer_tabla_frecuencia_asc
+
+            ;-obtener los valores de la frecuencia para darle un alto a la barras
+            GET_NUMBER_BINARY numero_frecuencia,contador7,alto_barra_pintar
+
+
+            ;redimension de altura
+            mov alto_barra_rescalada,0d
+            mov ax,0d
+            mov bx,0d
+            mov ax,alto_barra_pintar
+            mov bx,450d
+            mul bx
+            mov bx,valor_mas_alto_frecuencia
+            div bx
+            mov alto_barra_rescalada,ax
+
+
+            ; ( POSICION X, POSICION Y, ANCHO, ALTO ,COLOR )
+            PINTAR_BARRA espacio_inicial,5d,10d,alto_barra_rescalada,0eh 
+
+            ;para posicionar al siguiente espacio
+            add espacio_inicial,15d
+
+            ;para pasar al siguiente valor de la tabla de frecuencia
+            inc contador7
+
+            ; regreso para obtener el siguiente valor
+            jmp recorrer_tabla_frecuencia_asc 
+
+
+        fin_recorrer_tabla_frecuencia_asc:
+
+
+        ; pausa de pantalla para visualizar la imagen
         PAUSA_PANTALLA
 
+        ; limpieza de pantalla - para limpiar el modo de video
         LIMPIAR_PANTALLA
 
-        ;PRINT msg_iguales
+        ; regreso al bucle normal para pedir otro comando
+        ; PRINT msg_iguales
         jmp ingreso_comando
+
+
+
+
             
 
     ;************************************************************************************************************     
     ; -> se a ingresado el comando gbrarra_des
     comando_gbarra_desc:
-        PRINT msg_iguales
+
+        ; limpieza
+        mov contador7,0d
+        mov alto_barra,0d
+        mov espacio_inicial,10d
+        mov alto_barra_rescalada,0d
+        mov valor_mas_alto_frecuencia,0d
+
+        ; limpieza de pantalla
+        LIMPIAR_PANTALLA
+
+        ; inicio del modo de vido 
+        mov ah,00h
+        mov al,12h
+        int 10h        
+        
+        ;-> macro para ordenar la tabla de frecuencia segun la frecuencia de los datos de entrada
+        ;-> datos ordenados de la tabla de frecuencia en orden descendente 
+        FRECUENCIA_DES numero_frecuencia,vector_frecuencia,tamanio_vector_frecuencia 
+
+        ; obtener el valor mas grande la frecuencia
+        GET_NUMBER_BINARY numero_frecuencia,0,valor_mas_alto_frecuencia
+
+        
+        ;->recorrer la tabla de frecuencia y pintar
+        recorrer_tabla_frecuencia:
+            mov bx,0d
+            mov bx,tamanio_vector_frecuencia
+            cmp contador7,bx
+            jge fin_recorrer_tabla_frecuencia
+
+            ;-obtener los valores de la frecuencia para darle un alto a la barras
+            GET_NUMBER_BINARY numero_frecuencia,contador7,alto_barra_pintar
+
+
+            ;redimension de altura
+            mov alto_barra_rescalada,0d
+            mov ax,0d
+            mov bx,0d
+            mov ax,alto_barra_pintar
+            mov bx,450d
+            mul bx
+            mov bx,valor_mas_alto_frecuencia
+            div bx
+            mov alto_barra_rescalada,ax
+
+            
+
+            ; ( POSICION X, POSICION Y, ANCHO, ALTO ,COLOR )
+            PINTAR_BARRA espacio_inicial,5d,10d,alto_barra_rescalada,0dh 
+
+            ;para posicionar al siguiente espacio
+            add espacio_inicial,15d
+
+            ;para pasar al siguiente valor de la tabla de frecuencia
+            inc contador7
+
+            ; regreso para obtener el siguiente valor
+            jmp recorrer_tabla_frecuencia
+
+
+        fin_recorrer_tabla_frecuencia:
+
+
+
+
+        ; pausa de pantalla para visualizar la imagen
+        PAUSA_PANTALLA
+
+        ; limpieza de pantalla - para limpiar el modo de video
+        LIMPIAR_PANTALLA
+
+        ; regreso al bucle normal para pedir otro comando
+        ; PRINT msg_iguales
         jmp ingreso_comando    
+
+
+
+
         
 
     ;************************************************************************************************************    
