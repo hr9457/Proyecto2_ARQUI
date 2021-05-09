@@ -1332,6 +1332,13 @@ endm
     alto_barra_rescalada dw 0d
     valor_mas_alto_frecuencia dw 0d
 
+    posicion_valor_mas_alto_frecuencia dw 0d
+    
+    ; para imprimir los valores de la barras de la asc 
+    contador8 dw 0d 
+    numero_imprimir_modo_video dw 0d
+    posicionX_numero_modo_video db 0d
+
 
 
 
@@ -1926,9 +1933,14 @@ endm
         ;limpieza
         mov contador7,0d
         mov alto_barra,0d
-        mov espacio_inicial,10d
+        mov espacio_inicial,2d
         mov alto_barra_rescalada,0d
         mov valor_mas_alto_frecuencia,0d
+        mov posicion_valor_mas_alto_frecuencia,0d
+       
+        mov numero_imprimir_modo_video,0d
+        mov contador8,0d
+        mov posicionX_numero_modo_video,0d
 
         ; limpieza de pantalla
         LIMPIAR_PANTALLA
@@ -1944,9 +1956,14 @@ endm
         ; ordenamiento de la tabla de frecuencia de forma ascendente
         FRECUENCIA_ASC numero_frecuencia,vector_frecuencia,tamanio_vector_frecuencia
 
+        mov dx,0
+        mov dx,tamanio_vector_frecuencia
+        mov posicion_valor_mas_alto_frecuencia,dx 
+        dec posicion_valor_mas_alto_frecuencia
+
         ; busco el valor mas alto de la frecuencia
         ; para hacer la operacion en la redimension
-        GET_NUMBER_BINARY numero_frecuencia,tamanio_vector_frecuencia,valor_mas_alto_frecuencia
+        GET_NUMBER_BINARY numero_frecuencia,posicion_valor_mas_alto_frecuencia,valor_mas_alto_frecuencia
 
         
 
@@ -1967,7 +1984,7 @@ endm
             mov ax,0d
             mov bx,0d
             mov ax,alto_barra_pintar
-            mov bx,450d
+            mov bx,400d
             mul bx
             mov bx,valor_mas_alto_frecuencia
             div bx
@@ -1975,10 +1992,10 @@ endm
 
 
             ; ( POSICION X, POSICION Y, ANCHO, ALTO ,COLOR )
-            PINTAR_BARRA espacio_inicial,5d,10d,alto_barra_rescalada,0eh 
+            PINTAR_BARRA espacio_inicial,30d,22d,alto_barra_rescalada,0eh 
 
             ;para posicionar al siguiente espacio
-            add espacio_inicial,15d
+            add espacio_inicial,23d
 
             ;para pasar al siguiente valor de la tabla de frecuencia
             inc contador7
@@ -1990,6 +2007,43 @@ endm
         fin_recorrer_tabla_frecuencia_asc:
 
 
+        recorrer_tabla_valores:
+            mov bx,0d
+            mov bx,tamanio_vector_frecuencia
+            cmp contador8,bx
+            jge fin_recorrer_tabla_valores
+            ;comparacon escape de salida del ciclo for
+
+            ;obtener el valor para pintar debajo de la pantalla
+            GET_NUMBER_BINARY numero_frecuencia,contador8,numero_imprimir_modo_video
+
+            ;posiciono el curso debajod e la barras
+            ;-> reposicionar el cursos en la parte baja de la pantalla
+            mov dx,0d
+            mov dh,29d ; fila mas abajo de la pantalla del modo de video
+            mov dl,posicionX_numero_modo_video ; columna variable
+            mov bh,0
+            mov ah,2
+            int 10h
+
+            ;pinto el numero
+            PRINTNUMEROS numero_imprimir_modo_video
+
+
+            ;correr la posicion x del numero de la barra
+            add posicionX_numero_modo_video,3d
+
+            ;paso al siguiente valor del vector
+            inc contador8
+
+            ;repite el ciclo para obtener el siguiente valor
+            jmp recorrer_tabla_valores
+
+
+        fin_recorrer_tabla_valores: 
+            ;-
+
+        
         ; pausa de pantalla para visualizar la imagen
         PAUSA_PANTALLA
 
@@ -2012,9 +2066,13 @@ endm
         ; limpieza
         mov contador7,0d
         mov alto_barra,0d
-        mov espacio_inicial,10d
+        mov espacio_inicial,2d
         mov alto_barra_rescalada,0d
         mov valor_mas_alto_frecuencia,0d
+        
+        mov numero_imprimir_modo_video,0d
+        mov contador8,0d
+        mov posicionX_numero_modo_video,0d
 
         ; limpieza de pantalla
         LIMPIAR_PANTALLA
@@ -2048,7 +2106,7 @@ endm
             mov ax,0d
             mov bx,0d
             mov ax,alto_barra_pintar
-            mov bx,450d
+            mov bx,400d
             mul bx
             mov bx,valor_mas_alto_frecuencia
             div bx
@@ -2057,10 +2115,10 @@ endm
             
 
             ; ( POSICION X, POSICION Y, ANCHO, ALTO ,COLOR )
-            PINTAR_BARRA espacio_inicial,5d,10d,alto_barra_rescalada,0dh 
+            PINTAR_BARRA espacio_inicial,30d,22d,alto_barra_rescalada,0dh 
 
             ;para posicionar al siguiente espacio
-            add espacio_inicial,15d
+            add espacio_inicial,23d
 
             ;para pasar al siguiente valor de la tabla de frecuencia
             inc contador7
@@ -2072,6 +2130,41 @@ endm
         fin_recorrer_tabla_frecuencia:
 
 
+        recorrer_tabla_valores_desc:
+            ; limpieza
+            mov bx,0d
+            mov bx,tamanio_vector_frecuencia
+            ; escaque de salida del ciclo 
+            cmp contador8,bx
+            jge fin_recorrer_tabla_valores_desc
+
+            ; obtener el valor para pintar debajo de las barras en la pantalla
+            GET_NUMBER_BINARY numero_frecuencia,contador8,numero_imprimir_modo_video
+
+            ;posiciono el curso debajod e la barras
+            ;-> reposicionar el cursos en la parte baja de la pantalla
+            mov dx,0d
+            mov dh,29d ; fila mas abajo de la pantalla del modo de video
+            mov dl,posicionX_numero_modo_video ; columna variable
+            mov bh,0
+            mov ah,2
+            int 10h
+
+            ;pintar el numero
+            PRINTNUMEROS numero_imprimir_modo_video
+
+            ;correr la posicion x del numero de la barra
+            add posicionX_numero_modo_video,3d
+
+            ;paso al siguiente valor del vector
+            inc contador8
+
+            ; repite el ciclo hasta hasta llegar el final del vector
+            jmp recorrer_tabla_valores_desc
+
+
+        fin_recorrer_tabla_valores_desc:
+            ;--
 
 
         ; pausa de pantalla para visualizar la imagen
